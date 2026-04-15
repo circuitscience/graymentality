@@ -1,0 +1,143 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Gray Mentality Landing bootstrap.
+ *
+ * Responsibilities:
+ * - locate the project root
+ * - load `.env`
+ * - expose env helpers
+ * - create a shared mysqli connection when DB settings are present
+ */
+
+function gm_bootstrap_load_env_file(string $path): void
+{
+    if (!is_file($path)) {
+        return;
+    }
+
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false) {
+        return;
+    }
+
+    foreach ($lines as $line) {
+        $line = trim((string)$line);
+        if ($line === '' || str_starts_with($line, '#')) {
+            continue;
+        }
+
+        [$key, $value] = array_pad(explode('=', $line, 2), 2, '');
+        $key = trim($key);
+        $value = trim($value);
+
+        if ($key === '') {
+            continue;
+        }
+
+        if (
+            (str_starts_with($value, '"') && str_ends_with($value, '"')) ||
+            (str_starts_with($value, "'") && str_ends_with($value, "'"))
+        ) {
+            $value = substr($value, 1, -1);
+        }
+
+        $_ENV[$key] = $value;
+        $_SERVER[$key] = $value;
+        putenv($key . '=' . $value);
+    }
+}
+
+function gm_bootstrap_env(string $key, ?string $default = null): ?string
+{
+    if (array_key_exists($key, $_ENV) && $_ENV[$key] !== '') {
+        return (string)$_ENV[$key];
+    }
+
+    if (array_key_exists($key, $_SERVER) && $_SERVER[$key] !== '') {
+        return (string)$_SERVER[$key];
+    }
+
+    $value = getenv($key);
+    if ($value !== false && $value !== '') {
+        return $value;
+    }
+
+    return $default;
+}
+
+function gm_bootstrap_root(): string
+{
+    $guesses = array_filter([
+        gm_bootstrap_env('APP_ROOT'),
+        __DIR__,
+        '/var/www/graymentality',
+    ]);
+
+    foreach ($guesses as $guess) {
+        $guess = rtrim((string)$guess, DIRECTORY_SEPARATOR);
+        if ($guess !== '' && is_dir($guess)) {
+            return $guess;
+        }
+    }
+
+    return __DIR__;
+}
+
+if (!defined('GM_LANDING_ROOT')) {
+    define('GM_LANDING_ROOT', gm_bootstrap_root());
+}
+
+foreach (['.env', '.env.local'] as $envFile) {
+    gm_bootstrap_load_env_file(GM_LANDING_ROOT . DIRECTORY_SEPARATOR . $envFile);
+}
+
+if (!function_exists('env')) {
+    function env(string $key, ?string $default = null): ?string
+    {
+        return gm_bootstrap_env($key, $default);
+    }
+}
+
+if (!function_exists('gm_landing_configure_mysqli_connection')) {
+    function gm_landing_configure_mysqli_connection(mysqli $conn, string $charset = 'utf8mb4', string $collation = 'utf8mb4_0900_ai_ci'): void
+    {
+        $conn->set_charset($charset);
+        $conn->query("SET NAMES {$charset} COLLATE {$collation}");
+    }
+}
+
+$dbHost = gm_bootstrap_env('DB_HOST');
+$dbName = gm_bootstrap_env('DB_NAME');
+$dbUser = gm_bootstrap_env('DB_USER');
+$dbPass = gm_bootstrap_env('DB_PASS', '');
+$dbPort = (int)gm_bootstrap_env('DB_PORT', '3306');
+$dbCharset = gm_bootstrap_env('DB_CHARSET', 'utf8mb4');
+
+$conn = null;
+
+if ($dbHost !== null && $dbName !== null && $dbUser !== null) {
+    mysqli_report(MYSQLI_REPORT_OFF);
+    $conn = @new mysqli($dbHost, $dbUser, (string)$dbPass, $dbName, $dbPort);
+
+    if ($conn->connect_errno) {
+        error_log(
+            sprintf(
+                '[gm-landing] db connect failed (%d): %s | host=%s db=%s user=%s',
+                $conn->connect_errno,
+                $conn->connect_error,
+                $dbHost,
+                $dbName,
+                $dbUser
+            )
+        );
+        $conn = null;
+    } else {
+        gm_landing_configure_mysqli_connection($conn, $dbCharset);
+    }
+}
+
+if (!defined('GM_LANDING_DB_READY')) {
+    define('GM_LANDING_DB_READY', $conn instanceof mysqli);
+}
