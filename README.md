@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Gray Mentality Landing
 
 Standalone landing page source for `www.graymentality.ca`.
@@ -97,3 +98,7 @@ This will:
 - start MariaDB 10.6.24 and phpMyAdmin in Docker
 - start the PHP preview server on `http://127.0.0.1:8088`
 - keep the local preview isolated from the remote host database
+=======
+# graymentality
+Portal for xfit
+>>>>>>> 5371159662b7975ff51aa11791314735c70b8d8a
