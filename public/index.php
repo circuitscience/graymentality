@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+session_start();
 
 $config = require __DIR__ . '/../config.php';
 $modules = require __DIR__ . '/../data/modules.php';
@@ -27,7 +28,8 @@ function gm_landing_h(string $value): string
       </a>
 
       <nav class="nav-pills" aria-label="Primary">
-        <a class="pill pill-login" href="<?= gm_landing_h($config['login_url']) ?>">Login</a>
+        <button class="pill pill-login" onclick="openModal('login-modal')">Login</button>
+        <button class="pill pill-register" onclick="openModal('register-modal')">Register</button>
         <a class="pill pill-xfit" href="<?= gm_landing_h($config['xfit_url']) ?>">xFit</a>
       </nav>
     </header>
@@ -102,5 +104,74 @@ function gm_landing_h(string $value): string
       Main domain: <?= gm_landing_h($config['main_url']) ?> · xFit: <?= gm_landing_h($config['xfit_url']) ?>
     </footer>
   </div>
+
+  <!-- Auth Modals -->
+  <div id="login-modal" class="modal">
+    <div class="modal-overlay" onclick="closeModal('login-modal')"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Login</h2>
+        <button class="modal-close" onclick="closeModal('login-modal')">&times;</button>
+      </div>
+      <form class="auth-form" action="login.php" method="post">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" name="password" required>
+        </div>
+        <button type="submit" class="auth-submit">Login</button>
+      </form>
+      <p class="modal-footer-text">
+        <a href="reset_password.php">Forgot password?</a>
+        <span style="opacity:.55;">|</span>
+        Don't have an account? <a href="#" onclick="switchModal('register-modal')">Register</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="register-modal" class="modal">
+    <div class="modal-overlay" onclick="closeModal('register-modal')"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Register</h2>
+        <button class="modal-close" onclick="closeModal('register-modal')">&times;</button>
+      </div>
+      <form class="auth-form" action="register.php" method="post">
+        <div class="form-group">
+          <label for="register-username">Username</label>
+          <input type="text" id="register-username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="register-email">Email</label>
+          <input type="email" id="register-email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="register-password">Password</label>
+          <input type="password" id="register-password" name="password" required>
+        </div>
+        <button type="submit" class="auth-submit">Register</button>
+      </form>
+      <p class="modal-footer-text">Already have an account? <a href="#" onclick="switchModal('login-modal')">Login</a></p>
+    </div>
+  </div>
+
+  <script>
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    function switchModal(targetModalId) {
+      const modals = document.querySelectorAll('.modal');
+      modals.forEach(modal => modal.style.display = 'none');
+      openModal(targetModalId);
+    }
+  </script>
 </body>
 </html>

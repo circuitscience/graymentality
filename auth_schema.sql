@@ -1,0 +1,70 @@
+-- Auth System Schema
+-- Run this to set up authentication tables
+
+CREATE TABLE IF NOT EXISTS roles (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    role_id INT DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    email_verified BOOLEAN DEFAULT FALSE,
+    last_login TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    session_token VARCHAR(255) NOT NULL UNIQUE,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(100),
+    ip_address VARCHAR(45),
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    success BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL,
+    token VARCHAR(128) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_password_resets_email (email)
+);
+
+-- Insert default roles
+INSERT INTO roles (id, name, description) VALUES
+(1, 'user', 'Regular user'),
+(10, 'admin', 'Administrator')
+ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description);
+
+-- Insert default admin user
+INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, is_active, email_verified) VALUES
+('gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, TRUE, TRUE)
+ON DUPLICATE KEY UPDATE
+    password_hash = VALUES(password_hash),
+    first_name = VALUES(first_name),
+    last_name = VALUES(last_name),
+    role_id = VALUES(role_id),
+    is_active = VALUES(is_active),
+    email_verified = VALUES(email_verified);

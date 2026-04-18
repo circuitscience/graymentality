@@ -1,0 +1,20 @@
+.xfit-module {
+    background: #0b0b0b;
+    color: #eee;
+    font-family: system-ui, sans-serif;
+}
+
+.phase {
+    display: none;
+    max-width: 600px;
+    margin: auto;
+    padding: 2rem;
+}
+
+.phase.active {
+    display: block;
+}
+
+button {
+    margin-top: 1.5rem;
+}

@@ -20,5 +20,21 @@
     "**/backups/**": true,
     "**/runtime/**": true,
     "**/vendor/**": true
-  }
+  },
+  "sqltools.connections": [
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MariaDB",
+      "name": "mariadb",
+      "database": "jerry_bil_graymentality",
+      "username": "root"
+    }
+  ]
 }
