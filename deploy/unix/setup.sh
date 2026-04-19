@@ -4,25 +4,19 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
-ENV_EXAMPLE="${PROJECT_ROOT}/.env.example"
 
 echo "[gm-landing] project root: ${PROJECT_ROOT}"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
-  if [[ ! -f "${ENV_EXAMPLE}" ]]; then
-    echo "[gm-landing] missing .env.example at ${ENV_EXAMPLE}" >&2
-    exit 1
-  fi
-
-  cp "${ENV_EXAMPLE}" "${ENV_FILE}"
-  echo "[gm-landing] created .env from .env.example"
-else
-  echo "[gm-landing] .env already exists"
+  echo "[gm-landing] missing .env at ${ENV_FILE}" >&2
+  exit 1
 fi
 
-mkdir -p "${PROJECT_ROOT}/runtime/logs"
+echo "[gm-landing] .env already exists"
 
-chmod 750 "${PROJECT_ROOT}/runtime" "${PROJECT_ROOT}/runtime/logs" 2>/dev/null || true
+mkdir -p "${PROJECT_ROOT}/runtime/logs/cron"
+
+chmod 750 "${PROJECT_ROOT}/runtime" "${PROJECT_ROOT}/runtime/logs" "${PROJECT_ROOT}/runtime/logs/cron" 2>/dev/null || true
 chmod 640 "${ENV_FILE}" 2>/dev/null || true
 
 cat <<'EOF'

@@ -340,7 +340,7 @@ function e(string $s): string {
                 <div class="module-title">Muscle Growth Signals</div>
                 <div class="module-subtitle">Track strength, recovery, and consistency—stop guessing.</div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">
                 ‹ Modules
             </button>
         </header>

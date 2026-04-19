@@ -1,7 +1,7 @@
 services:
   db:
     image: mariadb:10.6.24
-    container_name: graymentality-db
+    container_name: gm-db
     restart: unless-stopped
     command:
       - --character-set-server=utf8mb4
@@ -27,28 +27,48 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: graymentality-web
+    container_name: gm-web
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     env_file:
-      - .env.docker
+      - .env
     environment:
       TZ: America/Toronto
+      APP_ROOT: /var/www/html
+      DB_HOST: db
     volumes:
       - ./:/var/www/html:rw
     ports:
       - "${WEB_PORT:-8088}:80"
 
+  cron:
+    build:
+      context: .
+      dockerfile: docker/cron/Dockerfile
+    container_name: gm-cron
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      TZ: America/Toronto
+      APP_ROOT: /var/www/html
+      DB_HOST: db
+    volumes:
+      - ./:/var/www/html:rw
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:5
-    container_name: graymentality-phpmyadmin
+    container_name: gm-phpmyadmin
     restart: unless-stopped
     depends_on:
       - db
     env_file:
-      - .env.docker
+      - .env
     environment:
       TZ: America/Toronto
       PMA_HOST: db

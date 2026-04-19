@@ -45,10 +45,9 @@ declare(strict_types=1);
  * Author: Jerry + exFIT / Gray Mentality (with AI assist)
  * Date:    <?php echo date('Y-m-d'); ?>
  */
-// If you have a config + session:
- session_start();
- require_once __DIR__ . '/../../../config/config.php'; // adjust path
- require_once __DIR__ . '/frame_potential_info.php'; // info modal content
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
+require_once __DIR__ . '/frame_potential_info.php'; // info modal content
 
 // Simple HTML escape
 function e(string $s): string {
@@ -171,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // ---- Optional: log to DB ----
         
         if (isset($conn) && $conn instanceof mysqli) {
-            $userId = $_SESSION['user_id'] ?? null;
+            $userId = $authUser['id'] ?? null;
             $stmt = $conn->prepare("
                 INSERT INTO frame_potential_logs
                   (user_id, height_cm, weight_kg, wrist_cm, ankle_cm, gender,
@@ -429,7 +428,7 @@ body::before {
     /* background image + a dark tint */
     background:
         linear-gradient(135deg, rgba(3,7,18,0.92), rgba(15,23,42,0.9)),
-        url("/public/modules/assets/couple.png") center center / cover no-repeat;
+        url("/modules/assets/couple.png") center center / cover no-repeat;
 
     /* blur + darken so text pops */
     filter: blur(6px) brightness(0.5);
@@ -848,7 +847,7 @@ body::before {
                     Estimate your natural canvas before you start painting muscle on it.
                 </div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">
                 ‹ Modules
             </button>
         </header>

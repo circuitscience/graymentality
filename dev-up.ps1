@@ -1,8 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$EnvFile = (Join-Path $PSScriptRoot '.env.docker'),
-    [string]$EnvExample = (Join-Path $PSScriptRoot '.env.docker.example'),
-    [string]$ComposeFile = (Join-Path $PSScriptRoot 'docker-compose.dev.yml'),
+    [string]$EnvFile = (Join-Path $PSScriptRoot '.env'),
+    [string]$ComposeFile = (Join-Path $PSScriptRoot 'compose.yml'),
     [string]$SchemaFile = (Join-Path $PSScriptRoot 'auth_schema.sql')
 )
 
@@ -28,13 +27,14 @@ function Import-GMEnvFile {
     }
 }
 
-if (-not (Test-Path -LiteralPath $EnvFile)) {
-    if (-not (Test-Path -LiteralPath $EnvExample)) {
-        throw "Missing env file and example: $EnvFile / $EnvExample"
-    }
+function ConvertTo-MySqlLiteral {
+    param([Parameter(Mandatory = $true)][string]$Value)
 
-    Copy-Item -LiteralPath $EnvExample -Destination $EnvFile -Force
-    Write-Host "Created $EnvFile from example."
+    return $Value.Replace("'", "''")
+}
+
+if (-not (Test-Path -LiteralPath $EnvFile)) {
+    throw "Missing env file: $EnvFile"
 }
 
 Import-GMEnvFile -Path $EnvFile
@@ -54,10 +54,10 @@ try {
         $dbName = $env:DB_NAME
         $dbRootPassword = $env:DB_ROOT_PASSWORD
         if ([string]::IsNullOrWhiteSpace($dbName)) {
-            throw 'DB_NAME is not set in .env.docker.'
+            throw 'DB_NAME is not set in .env.'
         }
         if ([string]::IsNullOrWhiteSpace($dbRootPassword)) {
-            throw 'DB_ROOT_PASSWORD is not set in .env.docker.'
+            throw 'DB_ROOT_PASSWORD is not set in .env.'
         }
 
         Write-Host "Ensuring database $dbName exists..."
@@ -68,6 +68,19 @@ try {
         $schemaSql = Get-Content -LiteralPath $SchemaFile -Raw
         $schemaSql | & docker compose --env-file $EnvFile -f $ComposeFile exec -T db mariadb -uroot "-p$dbRootPassword" $dbName
         if ($LASTEXITCODE -ne 0) { throw 'Failed to load the authentication schema.' }
+
+        Write-Host 'Ensuring app database user has privileges...'
+        $dbUserEscaped = ConvertTo-MySqlLiteral -Value $env:DB_USER
+        $dbPassEscaped = ConvertTo-MySqlLiteral -Value $env:DB_PASS
+        $grantSql = @"
+CREATE OR REPLACE USER '$dbUserEscaped'@'%' IDENTIFIED BY '$dbPassEscaped';
+CREATE OR REPLACE USER '$dbUserEscaped'@'localhost' IDENTIFIED BY '$dbPassEscaped';
+GRANT ALL PRIVILEGES ON $dbName.* TO '$dbUserEscaped'@'%';
+GRANT ALL PRIVILEGES ON $dbName.* TO '$dbUserEscaped'@'localhost';
+FLUSH PRIVILEGES;
+"@
+        $grantSql | & docker compose --env-file $EnvFile -f $ComposeFile exec -T db mariadb -uroot "-p$dbRootPassword"
+        if ($LASTEXITCODE -ne 0) { throw 'Failed to grant database privileges to the app user.' }
     }
 }
 finally {

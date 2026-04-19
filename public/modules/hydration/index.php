@@ -16,7 +16,7 @@ declare(strict_types=1);
  *  - Uses the same module shell:
  *      • blurred background image (module-specific)
  *      • translucent “module-card” overlay
- *      • header with “‹ Modules” back button to ../index.php
+ *      • header with “‹ Modules” back button to /modules/index.php
  *  - Background image is controlled via:
  *      :root { --module-bg-image: url('../assets/hydration.png'); }
  *
@@ -27,13 +27,8 @@ declare(strict_types=1);
  *      thirst_level, notes, hydration_score, created_at
  */
 
-session_start();
 require_once __DIR__ . '/../../../config/config.php';
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /public/login.php');
-    exit;
-}
+require_once __DIR__ . '/../../includes/session_guard.php';
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
     die('DB connection not available.');
@@ -43,7 +38,7 @@ if ($conn->connect_error) {
     die('DB Connection failed: ' . $conn->connect_error);
 }
 
-$userId = (int)$_SESSION['user_id'];
+$userId = (int)($authUser['id'] ?? 0);
 
 // Simple HTML escape
 function e(string $s): string
@@ -498,7 +493,7 @@ if ($stmt = $conn->prepare("
                 <div class="module-title">Hydration Tracker</div>
                 <div class="module-subtitle">Hydrate the engine before you floor it.</div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">
                 ‹ Modules
             </button>
         </header>

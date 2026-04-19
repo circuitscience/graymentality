@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $messageType = $result['success'] ? 'success' : 'error';
 
     if ($result['success']) {
-        // Redirect to dashboard or modules
-        header('Location: /index.php?page=modules');
+        // Send authenticated users to the modules portal.
+        header('Location: /modules/index.php');
         exit;
     }
 }
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Gray Mentality</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="/assets/styles.css">
     <style>
         .auth-container {
             max-width: 400px;
@@ -110,12 +110,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="password" id="password" name="password" required>
             </div>
             <div class="auth-links">
-                <a href="reset_password.php">Forgot password?</a>
-                <a href="register.php">Need an account? Register</a>
+                <a href="/reset_password.php">Forgot password?</a>
+                <a href="/register.php">Need an account? Register</a>
             </div>
             <button type="submit" class="auth-submit">Login</button>
         </form>
-        <p><a href="index.php">Back to Home</a></p>
+        <p><a href="/index.php">Back to Home</a></p>
     </div>
 </body>
 </html>

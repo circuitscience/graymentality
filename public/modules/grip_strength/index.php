@@ -15,7 +15,7 @@ declare(strict_types=1);
  *
  * DATA FLOW
  *  1) Session guard:
- *      - requires $_SESSION['user_id'] (redirects to /public/login.php if missing)
+ *      - requires $_SESSION['user_id'] (redirects to /login.php if missing)
  *  2) Pull user context:
  *      - SELECT age, gender FROM users WHERE id = ?
  *      - used ONLY for category cutoffs (weak/average/strong/elite)
@@ -37,7 +37,7 @@ declare(strict_types=1);
  *  - Uses the same module shell:
  *      • blurred background image (module-specific)
  *      • translucent “module-card” overlay
- *      • header with “‹ Modules” back button to /public/modules/index.php
+ *      • header with “‹ Modules” back button to /modules/index.php
  *  - Background image is controlled via:
  *      :root { --module-bg-image: url('../assets/grip.png'); }
  *
@@ -68,15 +68,10 @@ declare(strict_types=1);
  *  - Add edit/delete log entries (admin/user control)
  */
 
-session_start();
 require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /public/login.php');
-    exit;
-}
-
-$userId = (int)$_SESSION['user_id'];
+$userId = (int)($authUser['id'] ?? 0);
 
 // Simple HTML escape
 function e(string $s): string {
@@ -625,7 +620,7 @@ if (!empty($logs)) {
                 <div class="module-title">Grip Strength Lab</div>
                 <div class="module-subtitle">Track a simple marker that predicts real-world strength and aging.</div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">
                 ‹ Modules
             </button>
         </header>

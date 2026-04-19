@@ -16,22 +16,19 @@ declare(strict_types=1);
  *   bmr_logs (see bmr_calculator.php for schema)
  */
 
-session_start();
-require_once __DIR__ . '/../../../config/config.php'; // adjust path as needed
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../auth_functions.php';
+
+$authUser = require_auth();
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
     http_response_code(500);
     exit('Database connection not available.');
 }
 
-$userId  = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
-$roleId  = $_SESSION['user_data']['role_id'] ?? null;
+$userId  = (int)($authUser['id'] ?? 0);
+$roleId  = $_SESSION['user_data']['role_id'] ?? ($authUser['role_id'] ?? null);
 $isAdmin = ($roleId !== null && (int)$roleId === 10);
-
-if ($userId === null) {
-    http_response_code(401);
-    exit('Not logged in.');
-}
 
 // --- Filters via GET ---
 $filterUserId  = $isAdmin ? (int)($_GET['user_id'] ?? 0) : $userId;

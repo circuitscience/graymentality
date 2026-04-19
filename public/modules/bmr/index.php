@@ -119,15 +119,10 @@ declare(strict_types=1);
  * =============================================================================
  */
 
-session_start();
 require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /public/login.php');
-    exit;
-}
-
-$userId = (int)$_SESSION['user_id'];
+$userId = (int)($authUser['id'] ?? 0);
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
     http_response_code(500);
@@ -660,7 +655,7 @@ $selectedGoalUnit = $_POST['goal_time_unit'] ?? 'weeks';
                 <div class="module-title">BMR & Intake Planner</div>
                 <div class="module-subtitle">Estimate baseline calories. Log assumptions. Refine over time.</div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">‹ Modules</button>
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">‹ Modules</button>
         </header>
 
         <main class="module-main">

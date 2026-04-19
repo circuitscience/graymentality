@@ -1,0 +1,1 @@
+*/5 * * * * /usr/bin/php /var/www/graymentality/scripts/cron/process_mail_queue.php >> /var/www/graymentality/runtime/logs/cron/mail-runner.log 2>&1

@@ -33,15 +33,10 @@ declare(strict_types=1);
  *    notes, recovery_score, created_at
  */
 
-session_start();
 require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /public/login.php');
-    exit;
-}
-
-$userId = (int)$_SESSION['user_id'];
+$userId = (int)($authUser['id'] ?? 0);
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
     http_response_code(500);
@@ -506,7 +501,7 @@ if (!empty($recentLogs)) {
                 <div class="module-title">Sleep & Recovery</div>
                 <div class="module-subtitle">Log readiness. Spot patterns. Train smarter.</div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">‹ Modules</button>
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">‹ Modules</button>
         </header>
 
         <main class="module-main">

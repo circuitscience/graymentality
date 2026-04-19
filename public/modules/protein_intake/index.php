@@ -491,7 +491,7 @@ $post_max = e((string)($_POST['protein_max'] ?? ''));
                 <div class="module-title">Protein Intake</div>
                 <div class="module-subtitle">Calculate targets, track signals, and log the trend.</div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">
                 ‹ Modules
             </button>
         </header>
@@ -545,7 +545,7 @@ $post_max = e((string)($_POST['protein_max'] ?? ''));
                                 <p class="card-subtitle">Calculate your range, then save it to your log.</p>
                             </div>
 
-                            <form id="proteinForm" method="post" action="<?= e($_SERVER['PHP_SELF']); ?>#logs">
+                            <form id="proteinForm" method="post" action="#logs">
                                 <div class="row-2">
                                     <div>
                                         <label for="body_weight">Body weight</label>
@@ -676,7 +676,7 @@ $post_max = e((string)($_POST['protein_max'] ?? ''));
                                 <p class="card-subtitle">Quick compliance snapshot. Not perfection — pattern.</p>
                             </div>
 
-                            <form method="post" action="<?= e($_SERVER['PHP_SELF']); ?>#checkin">
+                            <form method="post" action="#checkin">
                                 <label>
                                     <input type="checkbox" name="hit_target" value="1" style="transform: translateY(1px);">
                                     I hit my protein target (or close enough)

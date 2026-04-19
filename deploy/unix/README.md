@@ -16,6 +16,8 @@ This folder contains the Linux/server-side deployment setup for the Gray Mentali
 - `apache-vhost.conf` - Apache virtual host example
 - `nginx-site.conf` - Nginx server block example
 
+Both server configs route requests through `public/index.php`, which acts as the front controller.
+
 ## Quick Start
 
 1. Copy the project to `/var/www/graymentality`.
@@ -30,3 +32,8 @@ This folder contains the Linux/server-side deployment setup for the Gray Mentali
 - This project does not require a database to render the landing page, but the bootstrap will connect if credentials are present.
 - Use `127.0.0.1` or the local socket host if MySQL is on the same Unix server.
 - Only `/public` should be exposed to the web server.
+- The web server should send `.php` requests through `public/index.php`; the front controller will resolve the target page or endpoint.
+- To process password reset mail, add a cron entry that runs `php /var/www/graymentality/scripts/cron/process_mail_queue.php` every few minutes. The sample crontab logs to `/var/www/graymentality/runtime/logs/cron/mail-runner.log`.
+- `scripts/cron/process_mail_queue.php` reads the root `.env` file.
+- Configure `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_ENCRYPTION`, `MAIL_SMTP_USERNAME`, and `MAIL_SMTP_PASSWORD` in `.env`.
+- Point SMTP at your real mail server when running the cron runner.

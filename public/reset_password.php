@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password - Gray Mentality</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="/assets/styles.css">
     <style>
         .auth-container {
             max-width: 400px;
@@ -183,8 +183,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <div class="helper-links">
-            <a href="login.php">Back to login</a>
-            <a href="register.php">Register instead</a>
+            <a href="/login.php">Back to login</a>
+            <a href="/register.php">Register instead</a>
         </div>
     </div>
 </body>

@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$EnvFile = (Join-Path $PSScriptRoot '.env.docker'),
-    [string]$ComposeFile = (Join-Path $PSScriptRoot 'docker-compose.dev.yml')
+    [string]$ComposeFile = (Join-Path $PSScriptRoot 'compose.yml')
 )
 
 $ErrorActionPreference = 'Stop'

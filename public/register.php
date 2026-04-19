@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Gray Mentality</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="/assets/styles.css">
     <style>
         .auth-container {
             max-width: 400px;
@@ -114,9 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="auth-submit">Register</button>
         </form>
-        <p><a href="login.php">Already have an account? Login</a></p>
-        <p><a href="reset_password.php">Need to reset a password?</a></p>
-        <p><a href="index.php">Back to Home</a></p>
+        <p><a href="/login.php">Already have an account? Login</a></p>
+        <p><a href="/reset_password.php">Need to reset a password?</a></p>
+        <p><a href="/index.php">Back to Home</a></p>
     </div>
 </body>
 </html>

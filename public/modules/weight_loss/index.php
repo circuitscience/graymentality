@@ -57,8 +57,8 @@
  *  - The value is in the *direction* and *magnitude* of trends over time.
  *
  * PATHS
- *  - “Back to Modules” button returns to: /public/modules/index.php
- *  - BMR link assumes: /public/modules/bmr/index.php (adjust if needed)
+ *  - “Back to Modules” button returns to: /modules/index.php
+ *  - BMR link assumes: /modules/bmr/index.php (adjust if needed)
  *
  * SECURITY / SAFETY
  *  - No SQL writes in this file currently.
@@ -66,8 +66,8 @@
  */
 
 declare(strict_types=1);
-session_start();
 require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
 
 // Simple HTML escape
 function e(string $s): string {
@@ -766,7 +766,7 @@ $hasResults = ($resultScenarios['A'] !== null || $resultScenarios['B'] !== null)
                     Compare two long-term patterns — including real-world holiday spikes.
                 </div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">
                 ‹ Modules
             </button>
         </header>
@@ -914,7 +914,7 @@ $hasResults = ($resultScenarios['A'] !== null || $resultScenarios['B'] !== null)
                                 </div>
 
                                 <div class="full-span">
-                                    <a href="../bmr/index.php" class="link-pill" target="_blank" rel="noopener">
+                                    <a href="/modules/bmr/index.php" class="link-pill" target="_blank" rel="noopener">
                                         <span>Need help estimating maintenance? Open the BMR Lab ↗</span>
                                     </a>
                                 </div>

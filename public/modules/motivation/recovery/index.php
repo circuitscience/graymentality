@@ -56,18 +56,8 @@ declare(strict_types=1);
  * =============================================================================
  */
 
-
-session_start();
-
 require_once __DIR__ . '/../../../../config/config.php';
-
-// require_once __DIR__ . '/../../../../includes/session_guard.php';
-
-$userId = (int)($_SESSION['user_id'] ?? 0);
-if ($userId <= 0 && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-  header('Location: /login.php');
-  exit;
-}
+require_once __DIR__ . '/../../../auth_functions.php';
 
 function json_out(array $data, int $code=200): void {
   http_response_code($code);
@@ -75,6 +65,37 @@ function json_out(array $data, int $code=200): void {
   echo json_encode($data);
   exit;
 }
+
+$isPost = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST';
+if ($isPost) {
+  if (auth_session_has_timed_out()) {
+    logout_user();
+    json_out([
+      'ok' => false,
+      'error' => 'session_timeout',
+      'redirect' => auth_login_url([
+        'reason' => 'timeout',
+        'message' => auth_timeout_message(),
+      ]),
+    ], 401);
+  }
+
+  $authUser = check_auth();
+  if (!$authUser) {
+    json_out([
+      'ok' => false,
+      'error' => 'not_logged_in',
+      'redirect' => auth_login_url([
+        'reason' => 'auth_required',
+        'message' => auth_login_message_for_reason('auth_required'),
+      ]),
+    ], 401);
+  }
+} else {
+  $authUser = require_auth();
+}
+
+$userId = (int)($authUser['id'] ?? 0);
 
 $motivationId = isset($_GET['motivation_id']) ? (int)$_GET['motivation_id'] : null;
 
@@ -196,7 +217,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     <div class="pill">
       <a href="/modules/motivation/angry/index.php">‹ Angry</a>
       <span style="opacity:.4">|</span>
-      <a href="/library/motivation_state_engineering/index.php">Library</a>
+      <a href="/modules/Library/learning_hub.php">Library</a>
     </div>
   </div>
 
@@ -348,7 +369,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
   }
 
   function goHome(){
-    window.location.href = '/public/index.php';
+    window.location.href = '/index.php';
   }
 </script>
 </body>

@@ -83,6 +83,236 @@ function auth_public_base_url(): string
     return 'http://localhost:8088';
 }
 
+function auth_mail_from_address(): string
+{
+    $value = trim((string)(getenv('MAIL_FROM') ?: ''));
+    if ($value !== '') {
+        return $value;
+    }
+
+    $host = (string)parse_url(auth_public_base_url(), PHP_URL_HOST);
+    if ($host !== '') {
+        return 'no-reply@' . $host;
+    }
+
+    return 'no-reply@graymentality.localhost';
+}
+
+function auth_mail_from_name(): string
+{
+    $value = trim((string)(getenv('MAIL_FROM_NAME') ?: ''));
+    if ($value !== '') {
+        return $value;
+    }
+
+    return 'Gray Mentality';
+}
+
+function auth_idle_timeout_seconds(): int
+{
+    $value = (int)(getenv('AUTH_IDLE_TIMEOUT_SECONDS') ?: 900);
+    return max(60, min(86400, $value));
+}
+
+function auth_warning_timeout_seconds(): int
+{
+    $idleTimeout = auth_idle_timeout_seconds();
+    $value = (int)(getenv('AUTH_IDLE_WARNING_SECONDS') ?: 60);
+    return max(15, min($idleTimeout - 5, $value));
+}
+
+function auth_session_keepalive_seconds(): int
+{
+    $value = (int)(getenv('AUTH_SESSION_KEEPALIVE_SECONDS') ?: 300);
+    return max(60, min(3600, $value));
+}
+
+function auth_timeout_message(): string
+{
+    return 'Your session expired due to inactivity. Please log in again.';
+}
+
+function auth_login_url(array $params = []): string
+{
+    $query = http_build_query(array_filter(
+        $params,
+        static fn ($value): bool => $value !== null && $value !== ''
+    ));
+
+    return '/login.php' . ($query !== '' ? '?' . $query : '');
+}
+
+function auth_login_message_for_reason(string $reason): string
+{
+    return match ($reason) {
+        'timeout' => auth_timeout_message(),
+        'logged_out' => 'You have been logged out.',
+        default => 'Please log in to continue.',
+    };
+}
+
+function auth_redirect_to_login(string $reason = 'auth_required'): never
+{
+    header('Location: ' . auth_login_url([
+        'reason' => $reason,
+        'message' => auth_login_message_for_reason($reason),
+    ]));
+    exit;
+}
+
+function auth_is_json_request(): bool
+{
+    $accept = strtolower((string)($_SERVER['HTTP_ACCEPT'] ?? ''));
+    if (str_contains($accept, 'application/json')) {
+        return true;
+    }
+
+    $requestedWith = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+    return $requestedWith === 'xmlhttprequest';
+}
+
+function auth_asset_url(string $filename): string
+{
+    $path = __DIR__ . '/assets/' . $filename;
+    $version = is_file($path) ? (string)filemtime($path) : (string)time();
+    return '/assets/' . rawurlencode($filename) . '?v=' . rawurlencode($version);
+}
+
+function auth_timeout_modal_head_markup(): string
+{
+    $config = [
+        'idleTimeoutSeconds' => auth_idle_timeout_seconds(),
+        'warningSeconds' => auth_warning_timeout_seconds(),
+        'keepaliveSeconds' => auth_session_keepalive_seconds(),
+        'keepaliveUrl' => '/session_ping.php',
+        'logoutUrl' => '/logout.php?reason=timeout',
+        'loginUrl' => auth_login_url([
+            'reason' => 'timeout',
+            'message' => auth_timeout_message(),
+        ]),
+        'message' => auth_timeout_message(),
+    ];
+
+    $json = json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    if (!is_string($json)) {
+        $json = '{}';
+    }
+
+    return implode("\n", [
+        '<link rel="stylesheet" href="' . htmlspecialchars(auth_asset_url('session-timeout.css'), ENT_QUOTES, 'UTF-8') . '">',
+        '<script>window.GM_SESSION_GUARD = Object.assign({}, window.GM_SESSION_GUARD || {}, ' . $json . ');</script>',
+        '<script defer src="' . htmlspecialchars(auth_asset_url('session-timeout.js'), ENT_QUOTES, 'UTF-8') . '"></script>',
+    ]);
+}
+
+function auth_timeout_modal_body_markup(): string
+{
+    return <<<HTML
+<div class="gm-session-timeout" id="gm-session-timeout" aria-hidden="true">
+    <div class="gm-session-timeout__backdrop"></div>
+    <div class="gm-session-timeout__dialog" role="dialog" aria-modal="true" aria-labelledby="gm-session-timeout-title">
+        <p class="gm-session-timeout__eyebrow">Session guard</p>
+        <h2 id="gm-session-timeout-title">Still there?</h2>
+        <p class="gm-session-timeout__copy">
+            Your session is about to expire because this page has been idle.
+        </p>
+        <p class="gm-session-timeout__countdown">
+            Automatic logout in <strong data-gm-session-countdown>60</strong>s.
+        </p>
+        <div class="gm-session-timeout__actions">
+            <button type="button" class="gm-session-timeout__button gm-session-timeout__button--primary" data-gm-session-stay>
+                Stay signed in
+            </button>
+            <button type="button" class="gm-session-timeout__button gm-session-timeout__button--ghost" data-gm-session-logout>
+                Log out now
+            </button>
+        </div>
+    </div>
+</div>
+HTML;
+}
+
+function auth_timeout_modal_output_buffer(string $buffer): string
+{
+    if (
+        stripos($buffer, '<html') === false &&
+        stripos($buffer, '<!doctype html') === false
+    ) {
+        return $buffer;
+    }
+
+    if (stripos($buffer, 'id="gm-session-timeout"') !== false) {
+        return $buffer;
+    }
+
+    $headMarkup = auth_timeout_modal_head_markup();
+    if (preg_match('~</head>~i', $buffer) === 1) {
+        $buffer = preg_replace('~</head>~i', $headMarkup . "\n</head>", $buffer, 1) ?? $buffer;
+    } else {
+        $buffer = $headMarkup . "\n" . $buffer;
+    }
+
+    $bodyMarkup = auth_timeout_modal_body_markup();
+    if (preg_match('~</body>~i', $buffer) === 1) {
+        $buffer = preg_replace('~</body>~i', $bodyMarkup . "\n</body>", $buffer, 1) ?? $buffer;
+    } else {
+        $buffer .= "\n" . $bodyMarkup;
+    }
+
+    return $buffer;
+}
+
+function auth_register_timeout_modal(): void
+{
+    static $registered = false;
+
+    if ($registered || PHP_SAPI === 'cli') {
+        return;
+    }
+
+    $registered = true;
+    ob_start('auth_timeout_modal_output_buffer');
+}
+
+function auth_session_has_timed_out(): bool
+{
+    $lastActivity = (int)($_SESSION['last_activity_at'] ?? 0);
+    if ($lastActivity <= 0) {
+        return false;
+    }
+
+    return (time() - $lastActivity) >= auth_idle_timeout_seconds();
+}
+
+function auth_mark_activity(): void
+{
+    $_SESSION['last_activity_at'] = time();
+}
+
+function queue_mail_message(string $recipientEmail, string $subject, string $bodyText): bool
+{
+    $recipientEmail = normalize_email($recipientEmail);
+    $subject = trim($subject);
+    $bodyText = trim($bodyText);
+
+    if ($recipientEmail === '' || $subject === '' || $bodyText === '') {
+        return false;
+    }
+
+    try {
+        $db = get_db_connection();
+        $stmt = $db->prepare(
+            "INSERT INTO mail_queue (recipient_email, subject, body_text, status, attempts, available_at)
+             VALUES (?, ?, ?, 'pending', 0, NOW())"
+        );
+        $stmt->execute([$recipientEmail, $subject, $bodyText]);
+        return true;
+    } catch (Throwable $e) {
+        error_log('[auth.mail_queue] ' . $e->getMessage());
+        return false;
+    }
+}
+
 function login_user(string $email, string $password, string $captcha_answer = ''): array
 {
     $db = get_db_connection();
@@ -140,6 +370,16 @@ function login_user(string $email, string $password, string $captcha_answer = ''
     $_SESSION['role_id'] = (int)$user['role_id'];
     $_SESSION['email_verified'] = (bool)$user['email_verified'];
     $_SESSION['session_token'] = $sessionToken;
+    $_SESSION['user_data'] = [
+        'id' => (int)$user['id'],
+        'username' => (string)$user['username'],
+        'email' => (string)$user['email'],
+        'first_name' => (string)$user['first_name'],
+        'last_name' => (string)$user['last_name'],
+        'role_id' => (int)$user['role_id'],
+        'email_verified' => (bool)$user['email_verified'],
+    ];
+    auth_mark_activity();
 
     $stmt = $db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
     $stmt->execute([(int)$user['id']]);
@@ -238,11 +478,68 @@ function request_password_reset(string $email): array
     );
     $stmt->execute([$email, $token, $expiresAt]);
 
+    $resetUrl = auth_public_base_url() . '/reset_password.php?token=' . urlencode($token);
+    $subject = 'Gray Mentality password reset';
+    $bodyText = implode("\n", [
+        'A password reset was requested for your Gray Mentality account.',
+        '',
+        'Reset link: ' . $resetUrl,
+        'This link expires in 1 hour.',
+        '',
+        'If you did not request this change, you can ignore this message.',
+    ]);
+    queue_mail_message($email, $subject, $bodyText);
+
     if (auth_is_debug_mode()) {
-        $result['reset_url'] = auth_public_base_url() . '/reset_password.php?token=' . urlencode($token);
+        $result['reset_url'] = $resetUrl;
     }
 
     return $result;
+}
+
+function change_user_password(string $currentPassword, string $newPassword): array
+{
+    $currentPassword = (string)$currentPassword;
+    $newPassword = (string)$newPassword;
+
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
+    if (!isset($_SESSION['user_id'])) {
+        return ['success' => false, 'message' => 'You must be logged in to change your password.'];
+    }
+
+    if ($currentPassword === '' || $newPassword === '') {
+        return ['success' => false, 'message' => 'Current password and new password are required.'];
+    }
+
+    if (strlen($newPassword) < 8) {
+        return ['success' => false, 'message' => 'New password must be at least 8 characters.'];
+    }
+
+    $db = get_db_connection();
+    $stmt = $db->prepare(
+        "SELECT id, password_hash
+         FROM users
+         WHERE id = ? AND is_active = TRUE
+         LIMIT 1"
+    );
+    $stmt->execute([(int)$_SESSION['user_id']]);
+    $user = $stmt->fetch();
+
+    if (!$user || !verify_password($currentPassword, (string)$user['password_hash'])) {
+        return ['success' => false, 'message' => 'Current password is incorrect.'];
+    }
+
+    $hash = hash_password($newPassword);
+    $stmt = $db->prepare("UPDATE users SET password_hash = ? WHERE id = ? LIMIT 1");
+    $stmt->execute([$hash, (int)$user['id']]);
+
+    $stmt = $db->prepare("DELETE FROM auth_sessions WHERE user_id = ?");
+    $stmt->execute([(int)$user['id']]);
+
+    return ['success' => true, 'message' => 'Password updated. Please log in again.'];
 }
 
 function complete_password_reset(string $token, string $password): array
@@ -300,11 +597,28 @@ function logout_user(): void
     }
 
     $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'] ?: '/',
+            $params['domain'] ?: '',
+            (bool)$params['secure'],
+            (bool)$params['httponly']
+        );
+    }
+
     session_destroy();
 }
 
 function check_auth(): ?array
 {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
     if (!isset($_SESSION['user_id']) || !isset($_SESSION['session_token'])) {
         return null;
     }
@@ -324,15 +638,45 @@ function check_auth(): ?array
         return null;
     }
 
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+    $refresh = $db->prepare("UPDATE auth_sessions SET expires_at = ? WHERE session_token = ?");
+    $refresh->execute([$expiresAt, $_SESSION['session_token']]);
+
+    $_SESSION['user_id'] = (int)$user['id'];
+    $_SESSION['username'] = (string)$user['username'];
+    $_SESSION['email'] = (string)$user['email'];
+    $_SESSION['first_name'] = (string)$user['first_name'];
+    $_SESSION['last_name'] = (string)$user['last_name'];
+    $_SESSION['role_id'] = (int)$user['role_id'];
+    $_SESSION['user_data'] = [
+        'id' => (int)$user['id'],
+        'username' => (string)$user['username'],
+        'email' => (string)$user['email'],
+        'first_name' => (string)$user['first_name'],
+        'last_name' => (string)$user['last_name'],
+        'role_id' => (int)$user['role_id'],
+    ];
+    auth_mark_activity();
+
     return $user;
 }
 
 function require_auth(): array
 {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
+    if (auth_session_has_timed_out()) {
+        logout_user();
+        auth_redirect_to_login('timeout');
+    }
+
     $user = check_auth();
     if (!$user) {
-        header('Location: /login.php');
-        exit;
+        auth_redirect_to_login('auth_required');
     }
+
+    auth_register_timeout_modal();
     return $user;
 }

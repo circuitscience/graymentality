@@ -52,6 +52,22 @@ CREATE TABLE IF NOT EXISTS password_resets (
     UNIQUE KEY uq_password_resets_email (email)
 );
 
+CREATE TABLE IF NOT EXISTS mail_queue (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    recipient_email VARCHAR(100) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    body_text MEDIUMTEXT NOT NULL,
+    status ENUM('pending', 'sent', 'failed') NOT NULL DEFAULT 'pending',
+    attempts INT NOT NULL DEFAULT 0,
+    available_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_attempt_at DATETIME NULL,
+    sent_at DATETIME NULL,
+    last_error TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_mail_queue_status_available (status, available_at)
+);
+
 -- Insert default roles
 INSERT INTO roles (id, name, description) VALUES
 (1, 'user', 'Regular user'),

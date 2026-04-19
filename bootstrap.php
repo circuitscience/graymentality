@@ -36,6 +36,11 @@ function gm_bootstrap_load_env_file(string $path): void
             continue;
         }
 
+        $existingValue = getenv($key);
+        if (($existingValue !== false && $existingValue !== '') || (array_key_exists($key, $_ENV) && $_ENV[$key] !== '') || (array_key_exists($key, $_SERVER) && $_SERVER[$key] !== '')) {
+            continue;
+        }
+
         if (
             (str_starts_with($value, '"') && str_ends_with($value, '"')) ||
             (str_starts_with($value, "'") && str_ends_with($value, "'"))
@@ -67,6 +72,42 @@ function gm_bootstrap_env(string $key, ?string $default = null): ?string
     return $default;
 }
 
+function gm_request_path(): string
+{
+    $requestUri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+    $path = parse_url($requestUri, PHP_URL_PATH);
+
+    if (!is_string($path) || $path === '') {
+        return '/';
+    }
+
+    $path = '/' . ltrim(str_replace('\\', '/', $path), '/');
+    if ($path !== '/') {
+        $path = rtrim($path, '/');
+    }
+
+    return $path === '' ? '/' : $path;
+}
+
+function gm_public_url(string $path = '/'): string
+{
+    $path = trim($path);
+
+    if ($path === '') {
+        return '/';
+    }
+
+    if (preg_match('~^(?:https?:)?//~i', $path) === 1) {
+        return $path;
+    }
+
+    if ($path[0] !== '/') {
+        $path = '/' . $path;
+    }
+
+    return $path;
+}
+
 function gm_bootstrap_root(): string
 {
     $guesses = array_filter([
@@ -89,9 +130,7 @@ if (!defined('GM_LANDING_ROOT')) {
     define('GM_LANDING_ROOT', gm_bootstrap_root());
 }
 
-foreach (['.env', '.env.local'] as $envFile) {
-    gm_bootstrap_load_env_file(GM_LANDING_ROOT . DIRECTORY_SEPARATOR . $envFile);
-}
+gm_bootstrap_load_env_file(GM_LANDING_ROOT . DIRECTORY_SEPARATOR . '.env');
 
 if (!function_exists('env')) {
     function env(string $key, ?string $default = null): ?string

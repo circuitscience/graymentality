@@ -2,7 +2,7 @@
 // public/learning_hub.php
 // exFIT Learning & Tracker Hub – Tabs or Accordion view on demand.
 
-session_start();
+require_once __DIR__ . '/../../includes/session_guard.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

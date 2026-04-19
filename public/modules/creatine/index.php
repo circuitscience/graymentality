@@ -50,13 +50,8 @@ declare(strict_types=1);
  * =============================================================================
  */
 
-session_start();
 require_once __DIR__ . '/../../../config/config.php';
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: /public/login.php');
-    exit;
-}
+require_once __DIR__ . '/../../includes/session_guard.php';
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
     die('DB connection not available.');
@@ -66,7 +61,7 @@ if ($conn->connect_error) {
     die('DB Connection failed: ' . $conn->connect_error);
 }
 
-$userId = (int)$_SESSION['user_id'];
+$userId = (int)($authUser['id'] ?? 0);
 
 // Simple HTML escape
 function e(string $s): string
@@ -501,7 +496,7 @@ if ($stmt = $conn->prepare("
                 <div class="module-title">Creatine Tracker</div>
                 <div class="module-subtitle">Log the habit. Keep the muscle saturated.</div>
             </div>
-            <button class="module-back" type="button" onclick="window.location.href='../index.php'">
+            <button class="module-back" type="button" onclick="window.location.href='/modules/index.php'">
                 ‹ Modules
             </button>
         </header>

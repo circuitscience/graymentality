@@ -33,16 +33,10 @@ declare(strict_types=1);
  * -------------------------------------------------------------------------
  */
 
-session_start();
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
 
-require_once __DIR__ . '/../../../config/config.php'; // adjust if needed
-
-// --- Basic session gate (swap to include your session_guard.php if preferred)
-$user_id = $_SESSION['user_id'] ?? null;
-if (!$user_id) {
-    header('Location: /login.php');
-    exit;
-}
+$user_id = (int)($authUser['id'] ?? 0);
 
 // --- CSRF
 if (!isset($_SESSION['csrf_token'])) {
@@ -562,7 +556,7 @@ $default_wake = $latest['wake_time'] ?? '';
       </div>
       <div class="row">
         <a class="btn" href="/modules/index.php">‹ Modules</a>
-        <a class="btn" href="/user_dashboard/index.php">Dashboard</a>
+        <a class="btn" href="/modules/index.php">Dashboard</a>
       </div>
     </div>
 

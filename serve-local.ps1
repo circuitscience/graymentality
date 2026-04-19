@@ -2,7 +2,7 @@
 param(
     [string]$ListenHost = '127.0.0.1',
     [int]$Port = 8088,
-    [string]$EnvFile = (Join-Path $PSScriptRoot '.env.local')
+    [string]$EnvFile = (Join-Path $PSScriptRoot '.env')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,6 +34,7 @@ Import-GMEnvFile -Path $EnvFile
 
 $php = Get-Command php -ErrorAction Stop
 $publicRoot = Join-Path $PSScriptRoot 'public'
+$routerScript = Join-Path $publicRoot 'router.php'
 if (-not (Test-Path -LiteralPath $publicRoot)) {
     throw "Missing public directory: $publicRoot"
 }
@@ -43,4 +44,4 @@ Write-Host "URL: http://$ListenHost`:$Port"
 Write-Host "Using env file: $EnvFile"
 Write-Host "Stop with Ctrl+C"
 
-& $php.Source -S "$ListenHost`:$Port" -t $publicRoot
+& $php.Source -S "$ListenHost`:$Port" -t $publicRoot $routerScript

@@ -17,7 +17,7 @@ declare(strict_types=1);
  * -------------------------------------------------------------------------
  */
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/session_guard.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
 ?>
 
 <!DOCTYPE html>

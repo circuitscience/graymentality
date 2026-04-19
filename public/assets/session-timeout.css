@@ -1,0 +1,109 @@
+.gm-session-timeout {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.gm-session-timeout.is-visible {
+    display: flex;
+}
+
+.gm-session-timeout__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 10, 17, 0.78);
+    backdrop-filter: blur(8px);
+}
+
+.gm-session-timeout__dialog {
+    position: relative;
+    width: min(100%, 440px);
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    background:
+        linear-gradient(180deg, rgba(20, 31, 46, 0.96), rgba(8, 13, 22, 0.98)),
+        rgba(8, 13, 22, 0.96);
+    color: #f4f7fb;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+
+.gm-session-timeout__eyebrow {
+    margin: 0 0 8px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8fc7ff;
+}
+
+.gm-session-timeout__dialog h2 {
+    margin: 0 0 10px;
+    font-size: clamp(1.5rem, 2vw, 1.85rem);
+    line-height: 1.1;
+}
+
+.gm-session-timeout__copy,
+.gm-session-timeout__countdown {
+    margin: 0;
+    color: rgba(244, 247, 251, 0.82);
+}
+
+.gm-session-timeout__countdown {
+    margin-top: 14px;
+}
+
+.gm-session-timeout__countdown strong {
+    color: #ffffff;
+}
+
+.gm-session-timeout__actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
+
+.gm-session-timeout__button {
+    min-width: 140px;
+    padding: 12px 16px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.18s ease, opacity 0.18s ease, border-color 0.18s ease;
+}
+
+.gm-session-timeout__button:hover {
+    transform: translateY(-1px);
+}
+
+.gm-session-timeout__button--primary {
+    background: linear-gradient(135deg, #a7ffb9, #55d6ff);
+    color: #03131f;
+    font-weight: 700;
+}
+
+.gm-session-timeout__button--ghost {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #f4f7fb;
+}
+
+@media (max-width: 640px) {
+    .gm-session-timeout__dialog {
+        padding: 22px;
+    }
+
+    .gm-session-timeout__actions {
+        flex-direction: column;
+    }
+
+    .gm-session-timeout__button {
+        width: 100%;
+    }
+}

@@ -58,15 +58,10 @@ declare(strict_types=1);
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-session_start();
-require_once __DIR__ . '/../../../config/config.php'; // adjust path as needed
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../includes/session_guard.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
-$userId = (int)$_SESSION['user_id'];
+$userId = (int)($authUser['id'] ?? 0);
 
 /* ---------------------------------------------------
  * 1) Fetch user + calorie profile
