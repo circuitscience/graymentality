@@ -5,6 +5,29 @@ declare(strict_types=1);
  * Authentication functions
  */
 
+if (!function_exists('auth_db_port')) {
+    function auth_db_port(): string
+    {
+        $host = strtolower(trim((string)(getenv('DB_HOST') ?: '127.0.0.1')));
+        $port = trim((string)(getenv('DB_PORT') ?: ''));
+        $hostPort = trim((string)(getenv('DB_HOST_PORT') ?: ''));
+
+        if (in_array($host, ['127.0.0.1', 'localhost'], true) && $hostPort !== '') {
+            return $hostPort;
+        }
+
+        if ($port !== '') {
+            return $port;
+        }
+
+        if ($hostPort !== '') {
+            return $hostPort;
+        }
+
+        return '3307';
+    }
+}
+
 function get_db_connection()
 {
     static $pdo = null;
@@ -14,7 +37,7 @@ function get_db_connection()
     }
 
     $host = getenv('DB_HOST') ?: '127.0.0.1';
-    $port = getenv('DB_PORT') ?: '3307';
+    $port = auth_db_port();
     $dbname = getenv('DB_NAME') ?: 'jerry_bil_graymentality';
     $user = getenv('DB_USER') ?: 'jerry_bil_gm';
     $pass = getenv('DB_PASS') ?: '!GM263e11';

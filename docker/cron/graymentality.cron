@@ -1,4 +1,0 @@
-SHELL=/bin/sh
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
-*/5 * * * * root /usr/local/bin/php /var/www/html/scripts/cron/process_mail_queue.php >> /var/www/html/runtime/logs/cron/mail-runner.log 2>&1

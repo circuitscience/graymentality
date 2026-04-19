@@ -1,0 +1,5 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+*/5 * * * * root /bin/sh -c 'log="/var/www/html/runtime/logs/cron/mail-runner.log"; printf "[%s] START process_mail_queue\n" "$(date "+\%Y-\%m-\%d \%H:\%M:\%S \%Z")" >> "$log"; /usr/local/bin/php /var/www/html/scripts/cron/process_mail_queue.php >> "$log" 2>&1; status=$?; printf "[%s] END process_mail_queue exit=%s\n" "$(date "+\%Y-\%m-\%d \%H:\%M:\%S \%Z")" "$status" >> "$log"; exit "$status"'
+30 2 * * * root /bin/sh -c 'log="/var/www/html/runtime/logs/cron/db-backup.log"; printf "[%s] START backup_database\n" "$(date "+\%Y-\%m-\%d \%H:\%M:\%S \%Z")" >> "$log"; /usr/local/bin/php /var/www/html/scripts/cron/backup_database.php >> "$log" 2>&1; status=$?; printf "[%s] END backup_database exit=%s\n" "$(date "+\%Y-\%m-\%d \%H:\%M:\%S \%Z")" "$status" >> "$log"; exit "$status"'

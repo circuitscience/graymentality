@@ -117,5 +117,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
         <p><a href="/index.php">Back to Home</a></p>
     </div>
+    <script>
+        try {
+            localStorage.removeItem('gm.session.logout');
+            localStorage.removeItem('gm.session.lastActivity');
+        } catch (error) {
+            // Ignore browsers that block storage access.
+        }
+    </script>
 </body>
 </html>

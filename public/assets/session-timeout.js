@@ -29,6 +29,11 @@
     let lastKeepalive = Date.now();
     let logoutStarted = false;
 
+    if ((Date.now() - lastActivity) >= idleTimeoutMs) {
+        lastActivity = Date.now();
+        storageSet(storageActivityKey, String(lastActivity));
+    }
+
     writeActivity(lastActivity, false);
 
     function readTimestamp(value) {

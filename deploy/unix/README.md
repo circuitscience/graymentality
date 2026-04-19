@@ -34,6 +34,9 @@ Both server configs route requests through `public/index.php`, which acts as the
 - Only `/public` should be exposed to the web server.
 - The web server should send `.php` requests through `public/index.php`; the front controller will resolve the target page or endpoint.
 - To process password reset mail, add a cron entry that runs `php /var/www/graymentality/scripts/cron/process_mail_queue.php` every few minutes. The sample crontab logs to `/var/www/graymentality/runtime/logs/cron/mail-runner.log`.
+- To create database backups, add a cron entry that runs `php /var/www/graymentality/scripts/cron/backup_database.php` daily. The sample Docker cron schedule writes to `/var/www/graymentality/runtime/logs/cron/db-backup.log`.
 - `scripts/cron/process_mail_queue.php` reads the root `.env` file.
+- `scripts/cron/backup_database.php` also reads the root `.env` file and writes backups into `/var/www/graymentality/runtime/backups/db` by default.
 - Configure `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_ENCRYPTION`, `MAIL_SMTP_USERNAME`, and `MAIL_SMTP_PASSWORD` in `.env`.
 - Point SMTP at your real mail server when running the cron runner.
+- Install `mariadb-client` or make sure `mariadb-dump` is available on the host if you run the backup cron outside Docker.

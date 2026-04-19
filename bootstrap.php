@@ -72,6 +72,27 @@ function gm_bootstrap_env(string $key, ?string $default = null): ?string
     return $default;
 }
 
+function gm_bootstrap_db_port(string $default = '3306'): string
+{
+    $host = strtolower(trim((string)gm_bootstrap_env('DB_HOST', '127.0.0.1')));
+    $port = trim((string)gm_bootstrap_env('DB_PORT', ''));
+    $hostPort = trim((string)gm_bootstrap_env('DB_HOST_PORT', ''));
+
+    if (in_array($host, ['127.0.0.1', 'localhost'], true) && $hostPort !== '') {
+        return $hostPort;
+    }
+
+    if ($port !== '') {
+        return $port;
+    }
+
+    if ($hostPort !== '') {
+        return $hostPort;
+    }
+
+    return $default;
+}
+
 function gm_request_path(): string
 {
     $requestUri = (string)($_SERVER['REQUEST_URI'] ?? '/');
@@ -151,7 +172,7 @@ $dbHost = gm_bootstrap_env('DB_HOST');
 $dbName = gm_bootstrap_env('DB_NAME');
 $dbUser = gm_bootstrap_env('DB_USER');
 $dbPass = gm_bootstrap_env('DB_PASS', '');
-$dbPort = (int)gm_bootstrap_env('DB_PORT', '3306');
+$dbPort = (int)gm_bootstrap_db_port('3306');
 $dbCharset = gm_bootstrap_env('DB_CHARSET', 'utf8mb4');
 
 $conn = null;

@@ -23,24 +23,27 @@ The public folder is now wired as a front controller:
 - `compose.yml` - local PHP + MariaDB 10.6 container stack
 - `docker/php/` - PHP/Apache image definition
 - `docker/cron/` - PHP CLI cron runner image definition
+- `cron/crontabs/root` - cron schedule copied into the Docker cron image
 - `scripts/mariadb/` - import/export/dump helpers for local database snapshots
 - `deploy/unix/` - server config and install helpers
 
 ## Environment Variables
 
-Recommended for production-style hosting:
+Recommended local `.env` values for this Docker-based dev setup:
 
 - `APP_ROOT=/var/www/graymentality`
 - `MAIN_DOMAIN_URL=https://www.graymentality.ca`
 - `LOGIN_URL=https://www.graymentality.ca/login`
 - `XFIT_URL=https://xfit.graymentality.ca`
 - `DB_HOST=127.0.0.1`
-- `DB_PORT=3306`
+- `DB_PORT=3307`
 - `DB_NAME=jerry_bil_graymentality`
 - `DB_USER=jerry_bil_gm`
 - `DB_PASS=!GM263e11`
 - `DB_ROOT_PASSWORD=root`
 - `DB_CHARSET=utf8mb4`
+
+Inside the Docker network, the `web` and `cron` containers connect to MariaDB at `db:3306`. The `3307` value above is the host-side mapped port so this project does not collide with xFit on `3306`.
 
 Auth tables:
 
@@ -61,9 +64,22 @@ Outbound mail:
 - password reset requests are queued in `mail_queue`
 - run `php scripts/cron/process_mail_queue.php` from cron to send queued mail; the sample crontab writes to `runtime/logs/cron/mail-runner.log`
 - the Docker cron container runs the mail runner every 5 minutes
+- run `php scripts/cron/backup_database.php` from cron to create database backups in `runtime/backups/db`
+- the Docker cron container runs the backup job daily at `02:30` America/Toronto and logs to `runtime/logs/cron/db-backup.log`
+- the sample cron entries add timestamped `START` and `END` markers with exit codes around each run
 - the cron script reads the root `.env` file
 - set `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, and `MAIL_SMTP_ENCRYPTION` in `.env`
 - `MAIL_FROM` and `MAIL_FROM_NAME` control the sender identity
+
+Database backups:
+
+- backups are written to `runtime/backups/db`
+- default retention is `14` days
+- backups are gzip-compressed by default
+- set `DB_BACKUP_DIR` to change the output directory
+- set `DB_BACKUP_PREFIX` to change the filename prefix
+- set `DB_BACKUP_KEEP_DAYS` to control retention
+- set `DB_BACKUP_COMPRESS=false` to write plain `.sql` files instead of `.sql.gz`
 
 Runtime config:
 
@@ -71,7 +87,8 @@ Runtime config:
 - run `pwsh ./dev-up.ps1` for Docker or `pwsh ./serve-local.ps1` for local PHP
 - web preview is on `http://localhost:8088`
 - mail cron runs in the `cron` container and writes to `runtime/logs/cron/mail-runner.log`
-- MariaDB is exposed on `http://localhost:3307`
+- db backup cron runs in the `cron` container and writes to `runtime/logs/cron/db-backup.log`
+- MariaDB is exposed on `127.0.0.1:3307`
 - phpMyAdmin is on `http://localhost:8090`
 
 Supported fallback names:

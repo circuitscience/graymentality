@@ -1,58 +1,7 @@
 <?php
 declare(strict_types=1);
 
-function gm_cron_load_env_file(string $path): void
-{
-    if (!is_file($path)) {
-        return;
-    }
-
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if ($lines === false) {
-        return;
-    }
-
-    foreach ($lines as $line) {
-        $line = trim((string)$line);
-        if ($line === '' || str_starts_with($line, '#')) {
-            continue;
-        }
-
-        [$key, $value] = array_pad(explode('=', $line, 2), 2, '');
-        $key = trim($key);
-        $value = trim($value);
-
-        if ($key === '') {
-            continue;
-        }
-
-        $existingValue = getenv($key);
-        if (($existingValue !== false && $existingValue !== '') || (array_key_exists($key, $_ENV) && $_ENV[$key] !== '') || (array_key_exists($key, $_SERVER) && $_SERVER[$key] !== '')) {
-            continue;
-        }
-
-        if (
-            (str_starts_with($value, '"') && str_ends_with($value, '"')) ||
-            (str_starts_with($value, "'") && str_ends_with($value, "'"))
-        ) {
-            $value = substr($value, 1, -1);
-        }
-
-        $_ENV[$key] = $value;
-        $_SERVER[$key] = $value;
-        putenv($key . '=' . $value);
-    }
-}
-
-function gm_cron_env(string $key, ?string $default = null): ?string
-{
-    $value = getenv($key);
-    if ($value !== false && trim($value) !== '') {
-        return trim($value);
-    }
-
-    return $default;
-}
+require_once __DIR__ . '/bootstrap.php';
 
 function gm_smtp_read_response($socket): array
 {
@@ -213,8 +162,7 @@ function gm_smtp_send_message(
     }
 }
 
-$projectRoot = dirname(__DIR__, 2);
-gm_cron_load_env_file($projectRoot . DIRECTORY_SEPARATOR . '.env');
+$projectRoot = gm_cron_project_root();
 
 require_once $projectRoot . '/public/auth_functions.php';
 

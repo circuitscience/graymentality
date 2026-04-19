@@ -38,6 +38,7 @@ services:
       TZ: America/Toronto
       APP_ROOT: /var/www/html
       DB_HOST: db
+      DB_PORT: 3306
     volumes:
       - ./:/var/www/html:rw
     ports:
@@ -58,6 +59,7 @@ services:
       TZ: America/Toronto
       APP_ROOT: /var/www/html
       DB_HOST: db
+      DB_PORT: 3306
     volumes:
       - ./:/var/www/html:rw
 

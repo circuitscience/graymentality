@@ -1,12 +1,12 @@
 FROM php:8.2-cli
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends cron \
+    && apt-get install -y --no-install-recommends cron mariadb-client \
     && docker-php-ext-install mysqli pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
-COPY docker/cron/graymentality.cron /etc/cron.d/graymentality
-RUN chmod 0644 /etc/cron.d/graymentality
+COPY cron/crontabs/root /etc/cron.d/root
+RUN chmod 0644 /etc/cron.d/root
 
 WORKDIR /var/www/html
 
