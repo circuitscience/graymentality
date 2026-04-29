@@ -23,9 +23,10 @@ Both server configs route requests through `public/index.php`, which acts as the
 1. Copy the project to `/var/www/graymentality`.
 2. Make the installer executable: `chmod +x deploy/unix/setup.sh`.
 3. Run `deploy/unix/setup.sh`.
-4. Edit `.env` with the live domain and database credentials.
-5. Install the Apache or Nginx config from `deploy/unix/` into your web server.
-6. Reload the web server and PHP-FPM.
+4. Copy `.env.staging.example` to `.env.staging` and edit it with the live domain and database credentials.
+5. Configure the server environment with `APP_ENV_FILE=.env.staging`, or copy `.env.staging` to `.env` if your host cannot set environment variables.
+6. Install the Apache or Nginx config from `deploy/unix/` into your web server.
+7. Reload the web server and PHP-FPM.
 
 ## Notes
 
@@ -33,10 +34,10 @@ Both server configs route requests through `public/index.php`, which acts as the
 - Use `127.0.0.1` or the local socket host if MySQL is on the same Unix server.
 - Only `/public` should be exposed to the web server.
 - The web server should send `.php` requests through `public/index.php`; the front controller will resolve the target page or endpoint.
+- For remote staging, keep credentials in `.env.staging`; do not commit that file.
 - To process password reset mail, add a cron entry that runs `php /var/www/graymentality/scripts/cron/process_mail_queue.php` every few minutes. The sample crontab logs to `/var/www/graymentality/runtime/logs/cron/mail-runner.log`.
 - To create database backups, add a cron entry that runs `php /var/www/graymentality/scripts/cron/backup_database.php` daily. The sample Docker cron schedule writes to `/var/www/graymentality/runtime/logs/cron/db-backup.log`.
-- `scripts/cron/process_mail_queue.php` reads the root `.env` file.
-- `scripts/cron/backup_database.php` also reads the root `.env` file and writes backups into `/var/www/graymentality/runtime/backups/db` by default.
-- Configure `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_ENCRYPTION`, `MAIL_SMTP_USERNAME`, and `MAIL_SMTP_PASSWORD` in `.env`.
+- `scripts/cron/process_mail_queue.php` and `scripts/cron/backup_database.php` use the same env-file selection as the web app, including `APP_ENV_FILE=.env.staging`.
+- Configure `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_ENCRYPTION`, `MAIL_SMTP_USERNAME`, and `MAIL_SMTP_PASSWORD` in your staging env file.
 - Point SMTP at your real mail server when running the cron runner.
 - Install `mariadb-client` or make sure `mariadb-dump` is available on the host if you run the backup cron outside Docker.

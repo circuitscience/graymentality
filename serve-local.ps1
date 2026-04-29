@@ -2,7 +2,7 @@
 param(
     [string]$ListenHost = '127.0.0.1',
     [int]$Port = 8088,
-    [string]$EnvFile = (Join-Path $PSScriptRoot '.env')
+    [string]$EnvFile = (Join-Path $PSScriptRoot '.env.local')
 )
 
 $ErrorActionPreference = 'Stop'

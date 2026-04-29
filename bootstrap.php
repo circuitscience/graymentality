@@ -147,11 +147,44 @@ function gm_bootstrap_root(): string
     return __DIR__;
 }
 
+function gm_bootstrap_env_file_path(string $root): string
+{
+    $explicitPath = trim((string)gm_bootstrap_env('GM_ENV_FILE', ''));
+    if ($explicitPath === '') {
+        $explicitPath = trim((string)gm_bootstrap_env('APP_ENV_FILE', ''));
+    }
+
+    if ($explicitPath !== '') {
+        if (preg_match('~^(?:[A-Za-z]:[\\\\/]|/)~', $explicitPath) === 1) {
+            return $explicitPath;
+        }
+
+        return $root . DIRECTORY_SEPARATOR . ltrim($explicitPath, "\\/");
+    }
+
+    $appEnv = strtolower(trim((string)gm_bootstrap_env('APP_ENV', '')));
+    if (in_array($appEnv, ['local', 'development', 'dev'], true)) {
+        $localPath = $root . DIRECTORY_SEPARATOR . '.env.local';
+        if (is_file($localPath)) {
+            return $localPath;
+        }
+    }
+
+    if (in_array($appEnv, ['staging', 'stage'], true)) {
+        $stagingPath = $root . DIRECTORY_SEPARATOR . '.env.staging';
+        if (is_file($stagingPath)) {
+            return $stagingPath;
+        }
+    }
+
+    return $root . DIRECTORY_SEPARATOR . '.env';
+}
+
 if (!defined('GM_LANDING_ROOT')) {
     define('GM_LANDING_ROOT', gm_bootstrap_root());
 }
 
-gm_bootstrap_load_env_file(GM_LANDING_ROOT . DIRECTORY_SEPARATOR . '.env');
+gm_bootstrap_load_env_file(gm_bootstrap_env_file_path(GM_LANDING_ROOT));
 
 if (!function_exists('env')) {
     function env(string $key, ?string $default = null): ?string

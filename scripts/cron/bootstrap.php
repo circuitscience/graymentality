@@ -71,13 +71,8 @@ function gm_cron_int_env(string $key, int $default): int
 
 function gm_cron_db_port(int $default = 3306): int
 {
-    $host = strtolower(trim((string)gm_cron_env('DB_HOST', '127.0.0.1')));
     $port = trim((string)gm_cron_env('DB_PORT', ''));
     $hostPort = trim((string)gm_cron_env('DB_HOST_PORT', ''));
-
-    if (in_array($host, ['127.0.0.1', 'localhost'], true) && $hostPort !== '') {
-        return max(1, (int)$hostPort);
-    }
 
     if ($port !== '') {
         return max(1, (int)$port);
@@ -90,6 +85,24 @@ function gm_cron_db_port(int $default = 3306): int
     return $default;
 }
 
+function gm_cron_env_file_path(string $root): string
+{
+    $explicitPath = trim((string)gm_cron_env('GM_ENV_FILE', ''));
+    if ($explicitPath === '') {
+        $explicitPath = trim((string)gm_cron_env('APP_ENV_FILE', ''));
+    }
+
+    if ($explicitPath !== '') {
+        if (preg_match('~^(?:[A-Za-z]:[\\\\/]|/)~', $explicitPath) === 1) {
+            return $explicitPath;
+        }
+
+        return $root . DIRECTORY_SEPARATOR . ltrim($explicitPath, "\\/");
+    }
+
+    return $root . DIRECTORY_SEPARATOR . '.env';
+}
+
 function gm_cron_project_root(): string
 {
     static $root = null;
@@ -98,7 +111,7 @@ function gm_cron_project_root(): string
     }
 
     $root = dirname(__DIR__, 2);
-    gm_cron_load_env_file($root . DIRECTORY_SEPARATOR . '.env');
+    gm_cron_load_env_file(gm_cron_env_file_path($root));
 
     return $root;
 }

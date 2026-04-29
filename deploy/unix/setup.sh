@@ -23,6 +23,6 @@ cat <<'EOF'
 [gm-landing] next steps:
 1. Edit .env with your live domain and DB credentials.
 2. Install the Apache or Nginx sample config from deploy/unix/.
-3. Point your web server document root at /var/www/graymentality.
+3. Point your web server document root at /var/www/graymentality/public.
 4. Reload PHP-FPM and the web server.
 EOF

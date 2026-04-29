@@ -5,16 +5,25 @@ declare(strict_types=1);
  * Authentication functions
  */
 
+require_once __DIR__ . '/../bootstrap.php';
+
+if (!function_exists('auth_env')) {
+    function auth_env(string $key, ?string $default = null): ?string
+    {
+        if (function_exists('gm_bootstrap_env')) {
+            return gm_bootstrap_env($key, $default);
+        }
+
+        $value = getenv($key);
+        return ($value !== false && $value !== '') ? $value : $default;
+    }
+}
+
 if (!function_exists('auth_db_port')) {
     function auth_db_port(): string
     {
-        $host = strtolower(trim((string)(getenv('DB_HOST') ?: '127.0.0.1')));
-        $port = trim((string)(getenv('DB_PORT') ?: ''));
-        $hostPort = trim((string)(getenv('DB_HOST_PORT') ?: ''));
-
-        if (in_array($host, ['127.0.0.1', 'localhost'], true) && $hostPort !== '') {
-            return $hostPort;
-        }
+        $port = trim((string)auth_env('DB_PORT', ''));
+        $hostPort = trim((string)auth_env('DB_HOST_PORT', ''));
 
         if ($port !== '') {
             return $port;
@@ -24,7 +33,19 @@ if (!function_exists('auth_db_port')) {
             return $hostPort;
         }
 
-        return '3307';
+        return '3306';
+    }
+}
+
+if (!function_exists('auth_db_required_env')) {
+    function auth_db_required_env(string $key): string
+    {
+        $value = trim((string)auth_env($key, ''));
+        if ($value === '') {
+            throw new RuntimeException("Missing required database setting: {$key}");
+        }
+
+        return $value;
     }
 }
 
@@ -36,14 +57,17 @@ function get_db_connection()
         return $pdo;
     }
 
-    $host = getenv('DB_HOST') ?: '127.0.0.1';
+    $host = auth_db_required_env('DB_HOST');
     $port = auth_db_port();
-    $dbname = getenv('DB_NAME') ?: 'jerry_bil_graymentality';
-    $user = getenv('DB_USER') ?: 'jerry_bil_gm';
-    $pass = getenv('DB_PASS') ?: '!GM263e11';
-    $charset = getenv('DB_CHARSET') ?: 'utf8mb4';
+    $dbname = auth_db_required_env('DB_NAME');
+    $user = auth_db_required_env('DB_USER');
+    $pass = (string)auth_env('DB_PASS', '');
+    $charset = auth_env('DB_CHARSET', 'utf8mb4') ?: 'utf8mb4';
 
-    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=$charset";
+    $socket = trim((string)auth_env('DB_SOCKET', ''));
+    $dsn = $socket !== ''
+        ? "mysql:unix_socket={$socket};dbname={$dbname};charset={$charset}"
+        : "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}";
 
     try {
         $pdo = new PDO($dsn, $user, $pass, [
@@ -52,7 +76,8 @@ function get_db_connection()
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
     } catch (PDOException $e) {
-        die('Database connection failed: ' . $e->getMessage());
+        error_log('[auth.db] ' . $e->getMessage());
+        throw new RuntimeException('Database connection failed.');
     }
 
     return $pdo;
@@ -85,19 +110,19 @@ function verify_password(string $password, string $hash): bool
 
 function auth_is_debug_mode(): bool
 {
-    $appDebug = strtolower((string)(getenv('APP_DEBUG') ?: ''));
+    $appDebug = strtolower((string)auth_env('APP_DEBUG', ''));
     if (in_array($appDebug, ['1', 'true', 'yes', 'on'], true)) {
         return true;
     }
 
-    $appEnv = strtolower((string)(getenv('APP_ENV') ?: 'development'));
+    $appEnv = strtolower((string)auth_env('APP_ENV', 'development'));
     return $appEnv !== 'production';
 }
 
 function auth_public_base_url(): string
 {
     foreach (['PUBLIC_BASE_URL', 'MAIN_DOMAIN_URL', 'BASE_URL', 'APP_URL'] as $key) {
-        $value = trim((string)(getenv($key) ?: ''));
+        $value = trim((string)auth_env($key, ''));
         if ($value !== '') {
             return rtrim($value, '/');
         }
@@ -108,7 +133,7 @@ function auth_public_base_url(): string
 
 function auth_mail_from_address(): string
 {
-    $value = trim((string)(getenv('MAIL_FROM') ?: ''));
+    $value = trim((string)auth_env('MAIL_FROM', ''));
     if ($value !== '') {
         return $value;
     }
@@ -123,7 +148,7 @@ function auth_mail_from_address(): string
 
 function auth_mail_from_name(): string
 {
-    $value = trim((string)(getenv('MAIL_FROM_NAME') ?: ''));
+    $value = trim((string)auth_env('MAIL_FROM_NAME', ''));
     if ($value !== '') {
         return $value;
     }
@@ -133,20 +158,20 @@ function auth_mail_from_name(): string
 
 function auth_idle_timeout_seconds(): int
 {
-    $value = (int)(getenv('AUTH_IDLE_TIMEOUT_SECONDS') ?: 900);
+    $value = (int)auth_env('AUTH_IDLE_TIMEOUT_SECONDS', '900');
     return max(60, min(86400, $value));
 }
 
 function auth_warning_timeout_seconds(): int
 {
     $idleTimeout = auth_idle_timeout_seconds();
-    $value = (int)(getenv('AUTH_IDLE_WARNING_SECONDS') ?: 60);
+    $value = (int)auth_env('AUTH_IDLE_WARNING_SECONDS', '60');
     return max(15, min($idleTimeout - 5, $value));
 }
 
 function auth_session_keepalive_seconds(): int
 {
-    $value = (int)(getenv('AUTH_SESSION_KEEPALIVE_SECONDS') ?: 300);
+    $value = (int)auth_env('AUTH_SESSION_KEEPALIVE_SECONDS', '300');
     return max(60, min(3600, $value));
 }
 

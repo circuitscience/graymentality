@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$EnvFile = (Join-Path $PSScriptRoot '.env'),
+    [string]$EnvFile = (Join-Path $PSScriptRoot '.env.local'),
     [string]$ComposeFile = (Join-Path $PSScriptRoot 'compose.yml'),
     [string]$SchemaFile = (Join-Path $PSScriptRoot 'auth_schema.sql')
 )

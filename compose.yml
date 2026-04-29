@@ -33,7 +33,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env
+      - ${GM_ENV_FILE:-.env.local}
     environment:
       TZ: America/Toronto
       APP_ROOT: /var/www/html
@@ -54,7 +54,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env
+      - ${GM_ENV_FILE:-.env.local}
     environment:
       TZ: America/Toronto
       APP_ROOT: /var/www/html
@@ -70,7 +70,7 @@ services:
     depends_on:
       - db
     env_file:
-      - .env
+      - ${GM_ENV_FILE:-.env.local}
     environment:
       TZ: America/Toronto
       PMA_HOST: db

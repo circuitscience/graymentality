@@ -67,7 +67,7 @@ Outbound mail:
 - run `php scripts/cron/backup_database.php` from cron to create database backups in `runtime/backups/db`
 - the Docker cron container runs the backup job daily at `02:30` America/Toronto and logs to `runtime/logs/cron/db-backup.log`
 - the sample cron entries add timestamped `START` and `END` markers with exit codes around each run
-- the cron script reads the root `.env` file
+- the cron scripts load the same env file selection as the web bootstrap, including `APP_ENV_FILE=.env.staging`
 - set `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, and `MAIL_SMTP_ENCRYPTION` in `.env`
 - `MAIL_FROM` and `MAIL_FROM_NAME` control the sender identity
 
@@ -83,13 +83,16 @@ Database backups:
 
 Runtime config:
 
-- edit `.env` with your deployment values
+- use `.env.local` for local development and `.env.staging` for remote staging
+- safe templates are committed as `.env.local.example` and `.env.staging.example`
+- `.env.local`, `.env.staging`, `.env.remote`, and `.env.docker` are ignored so credentials stay out of git
 - run `pwsh ./dev-up.ps1` for Docker or `pwsh ./serve-local.ps1` for local PHP
 - web preview is on `http://localhost:8088`
 - mail cron runs in the `cron` container and writes to `runtime/logs/cron/mail-runner.log`
 - db backup cron runs in the `cron` container and writes to `runtime/logs/cron/db-backup.log`
 - MariaDB is exposed on `127.0.0.1:3307`
 - phpMyAdmin is on `http://localhost:8090`
+- the bootstrap and cron scripts still load `.env` by default unless the server sets `GM_ENV_FILE` or `APP_ENV_FILE`, for example `APP_ENV_FILE=.env.staging`
 
 Supported fallback names:
 
