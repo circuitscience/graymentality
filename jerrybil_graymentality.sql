@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: db:3306
--- Generation Time: Apr 27, 2026 at 01:01 PM
+-- Generation Time: May 03, 2026 at 12:24 PM
 -- Server version: 10.6.24-MariaDB-ubu2204
 -- PHP Version: 8.3.26
 
@@ -20,8 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `jerry_bil_graymentality`
 --
-CREATE DATABASE IF NOT EXISTS `jerry_bil_graymentality` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `jerry_bil_graymentality`;
 
 -- --------------------------------------------------------
 
@@ -606,6 +604,10 @@ CREATE TABLE `users` (
   `role_id` int(11) DEFAULT 1,
   `is_active` tinyint(1) DEFAULT 1,
   `email_verified` tinyint(1) DEFAULT 0,
+  `policy_acknowledged_at` timestamp NULL DEFAULT NULL,
+  `policy_version` varchar(32) DEFAULT NULL,
+  `policy_ip_address` varchar(45) DEFAULT NULL,
+  `policy_user_agent` varchar(255) DEFAULT NULL,
   `last_login` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -615,8 +617,8 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `role_id`, `is_active`, `email_verified`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, 1, 1, '2026-04-25 17:16:57', '2026-04-15 18:26:36', '2026-04-25 17:16:57');
+INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `role_id`, `is_active`, `email_verified`, `policy_acknowledged_at`, `policy_version`, `policy_ip_address`, `policy_user_agent`, `last_login`, `created_at`, `updated_at`) VALUES
+(1, 'gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, 1, 1, NULL, NULL, NULL, NULL, '2026-04-25 17:16:57', '2026-04-15 18:26:36', '2026-04-25 17:16:57');
 
 -- --------------------------------------------------------
 
@@ -631,6 +633,23 @@ CREATE TABLE `user_calorie_profiles` (
   `body_type` enum('ectomorph','mesomorph','endomorph','unknown') NOT NULL DEFAULT 'unknown',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_profiles`
+--
+
+CREATE TABLE `user_profiles` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `gender` varchar(32) DEFAULT NULL,
+  `timezone` varchar(64) DEFAULT NULL,
+  `onboarding_completed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -837,6 +856,13 @@ ALTER TABLE `user_calorie_profiles`
   ADD PRIMARY KEY (`user_id`);
 
 --
+-- Indexes for table `user_profiles`
+--
+ALTER TABLE `user_profiles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -1003,6 +1029,12 @@ ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
+-- AUTO_INCREMENT for table `user_profiles`
+--
+ALTER TABLE `user_profiles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- Constraints for dumped tables
 --
 
@@ -1055,6 +1087,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `user_calorie_profiles`
   ADD CONSTRAINT `fk_ucp_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_profiles`
+--
+ALTER TABLE `user_profiles`
+  ADD CONSTRAINT `fk_user_profiles_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

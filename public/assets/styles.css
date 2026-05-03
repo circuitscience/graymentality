@@ -462,11 +462,47 @@ h3 {
 .tenets-section,
 .real-life-section,
 .portal-section,
+.guide-intro,
 .start-section {
   position: relative;
   padding: clamp(72px, 10vw, 128px) 0;
   border-bottom: 1px solid var(--line);
   overflow: hidden;
+}
+
+.guide-intro {
+  min-height: calc(100vh - 74px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.guide-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 860px;
+  margin-top: 34px;
+}
+
+.guide-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  background: rgba(5, 5, 6, 0.56);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.guide-nav a:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(255, 108, 20, 0.09);
 }
 
 .section-graphic {
@@ -1251,6 +1287,47 @@ h3 {
   box-shadow: 0 0 0 2px rgba(255, 108, 20, 0.18);
 }
 
+.policy-acknowledgement {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.policy-acknowledgement p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.policy-acknowledgement a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.checkbox-field {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 .auth-submit {
   min-height: 48px;
   border: 1px solid var(--accent);
@@ -1410,11 +1487,13 @@ h3 {
 
   .nav-link,
   .pill,
-  .action-button {
+  .action-button,
+  .guide-nav a {
     width: 100%;
   }
 
-  .hero-section {
+  .hero-section,
+  .guide-intro {
     min-height: auto;
     padding-top: 62px;
   }

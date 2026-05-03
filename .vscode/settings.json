@@ -32,7 +32,7 @@
       "port": 3307,
       "driver": "MariaDB",
       "name": "mariadb",
-      "database": "jerry_bil_graymentality",
+      "database": "jerrybil_graymentality",
       "username": "root"
     }
   ]

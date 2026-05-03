@@ -44,7 +44,7 @@ function Get-GMEnvValue {
 
 Import-GMEnvFile -Path $EnvFile
 
-if (-not $DbName) { $DbName = Get-GMEnvValue -Key 'DB_NAME' -Default 'graymentality_landing' }
+if (-not $DbName) { $DbName = Get-GMEnvValue -Key 'DB_NAME' -Default 'jerrybil_graymentality' }
 if (-not $DbUser) { $DbUser = Get-GMEnvValue -Key 'DB_USER' -Default 'graymentality' }
 if (-not $DbPass) { $DbPass = Get-GMEnvValue -Key 'DB_PASS' -Default 'graymentality' }
 

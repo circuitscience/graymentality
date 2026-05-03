@@ -9,7 +9,7 @@ services:
       - --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
     environment:
       TZ: America/Toronto
-      MARIADB_DATABASE: ${DB_NAME:-jerry_bil_graymentality}
+      MARIADB_DATABASE: ${DB_NAME:-jerrybil_graymentality}
       MARIADB_USER: ${DB_USER:-graymentality}
       MARIADB_PASSWORD: ${DB_PASS:-graymentality}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}

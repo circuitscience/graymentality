@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS users (
     role_id INT DEFAULT 1,
     is_active BOOLEAN DEFAULT TRUE,
     email_verified BOOLEAN DEFAULT FALSE,
+    policy_acknowledged_at TIMESTAMP NULL,
+    policy_version VARCHAR(32) DEFAULT NULL,
+    policy_ip_address VARCHAR(45) DEFAULT NULL,
+    policy_user_agent VARCHAR(255) DEFAULT NULL,
     last_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -33,6 +37,20 @@ CREATE TABLE IF NOT EXISTS auth_sessions (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    date_of_birth DATE NULL,
+    gender VARCHAR(32) NULL,
+    timezone VARCHAR(64) NULL,
+    onboarding_completed_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_profiles_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS login_attempts (

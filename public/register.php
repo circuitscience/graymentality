@@ -12,13 +12,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $first_name = trim((string)($_POST['first_name'] ?? ''));
     $last_name = trim((string)($_POST['last_name'] ?? ''));
+    $policyAck = (string)($_POST['policy_ack'] ?? '');
 
-    try {
-        $result = register_user($username, $email, $password, $first_name, $last_name);
-    } catch (Throwable $e) {
-        error_log('[auth.register] ' . $e->getMessage());
-        $result = ['success' => false, 'message' => 'Authentication database is not initialized.'];
+    if ($policyAck !== '1') {
+        $result = ['success' => false, 'message' => 'You must acknowledge the site policies and terms before registering.'];
+    } else {
+        try {
+            $result = register_user($username, $email, $password, $first_name, $last_name, '', true);
+        } catch (Throwable $e) {
+            error_log('[auth.register] ' . $e->getMessage());
+            $result = ['success' => false, 'message' => 'Authentication database is not initialized.'];
+        }
     }
+
     $message = $result['message'];
     $messageType = $result['success'] ? 'success' : 'error';
 
@@ -111,6 +117,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
+            </div>
+            <div class="policy-acknowledgement">
+                <p>
+                    By registering, you acknowledge that you have reviewed and agree to the
+                    <a href="/terms" target="_blank" rel="noopener">Terms of Use</a>,
+                    <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>, and related site policies.
+                    Gray Mentality content is for general educational and operational purposes and is not medical,
+                    legal, financial, or emergency advice.
+                </p>
+                <label class="checkbox-field" for="policy_ack">
+                    <input type="checkbox" id="policy_ack" name="policy_ack" value="1" required>
+                    <span>I acknowledge and agree.</span>
+                </label>
             </div>
             <button type="submit" class="auth-submit">Register</button>
         </form>

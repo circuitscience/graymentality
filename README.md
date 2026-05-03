@@ -37,7 +37,7 @@ Recommended local `.env` values for this Docker-based dev setup:
 - `XFIT_URL=https://xfit.graymentality.ca`
 - `DB_HOST=127.0.0.1`
 - `DB_PORT=3307`
-- `DB_NAME=jerry_bil_graymentality`
+- `DB_NAME=jerrybil_graymentality`
 - `DB_USER=jerry_bil_gm`
 - `DB_PASS=!GM263e11`
 - `DB_ROOT_PASSWORD=root`

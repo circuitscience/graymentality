@@ -20,8 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $messageType = $result['success'] ? 'success' : 'error';
 
     if ($result['success']) {
-        // Send authenticated users to the modules portal.
-        header('Location: /modules/index.php');
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $target = $userId > 0 && !auth_profile_is_complete($userId)
+            ? auth_profile_setup_url()
+            : '/modules/index.php';
+
+        header('Location: ' . $target);
         exit;
     }
 }

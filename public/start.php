@@ -8,6 +8,33 @@ function gm_landing_h(string $value): string
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
+$tenets = [
+    ['Reality First', 'You face what is real before you react to it.', 'axis'],
+    ['Act Without Permission', 'You don\'t wait for motivation, approval, or perfect conditions.', 'arrow'],
+    ['Refuse Passive Decline', 'If you\'re getting worse, you correct it.', 'break'],
+    ['Discipline Over Mood', 'How you feel does not decide what you do.', 'bar'],
+    ['Maintain the Body', 'Strength, movement, and health are responsibilities.', 'frame'],
+    ['Control the Mind', 'Thoughts are observed, not obeyed.', 'eye'],
+    ['Use Emotion - Don\'t Serve It', 'Anger fuels. It does not lead. Sadness informs. It does not define.', 'flame'],
+    ['Recover With Purpose', 'Rest is strategic. Not escape.', 'cycle'],
+    ['Stay Consistent Under Friction', 'You continue when it\'s inconvenient, slow, or unrewarding.', 'stack'],
+    ['Finish Alive', 'You do not drift to the end. You live deliberately until you can\'t.', 'pulse'],
+];
+
+$realLife = [
+    'Choosing the next correct action',
+    'Interrupting mental drift',
+    'Staying composed under stress',
+    'Finishing what you start',
+    'Recovering without disappearing',
+];
+
+$portalPaths = [
+    ['exFit', 'Physical practice, training structure, body maintenance, and measurable discipline.', 'route-physical'],
+    ['Concept Library', 'Mental models, operating principles, emotional control, recovery, and decision-making.', 'route-concept'],
+    ['Personal Systems', 'Habits, standards, logs, and repeatable actions that keep drift visible.', 'route-system'],
+];
+
 $stylesheetCandidates = array_filter([
     rtrim((string)($_SERVER['DOCUMENT_ROOT'] ?? ''), DIRECTORY_SEPARATOR) . '/assets/styles.css',
     dirname(__DIR__) . '/assets/styles.css',
@@ -27,8 +54,8 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gray Mentality | Start Here</title>
-  <meta name="description" content="A way of operating when life is not ideal. Accept reality. Refuse passive decline.">
+  <title>Start Here | Gray Mentality</title>
+  <meta name="description" content="A guided introduction to Gray Mentality: clarity, tenets, decisions, and the portal.">
   <link rel="stylesheet" href="<?= gm_public_url('/assets/styles.css') ?>?v=<?= gm_landing_h($stylesheetVersion) ?>">
   <style>
     body { margin: 0; min-height: 100vh; background: #050506; color: #f0f0ee; font-family: "Segoe UI", Arial, system-ui, sans-serif; }
@@ -87,35 +114,134 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
         <span>Gray Mentality</span>
       </a>
       <nav class="header-actions" aria-label="Primary">
+        <a class="nav-link" href="<?= gm_public_url('/') ?>">Home</a>
         <button class="nav-link nav-button" type="button" onclick="openModal('login-modal')">Login</button>
       </nav>
     </header>
 
     <main>
-      <section class="hero-section" aria-labelledby="hero-title">
-        <div class="hero-graphic" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
+      <section class="guide-intro" aria-labelledby="guide-title">
         <div class="hero-rule" aria-hidden="true"></div>
-        <p class="section-kicker">Start Here</p>
-        <h1 id="hero-title">Gray Mentality</h1>
-        <p class="hero-subheadline">A way of operating when life isn&rsquo;t ideal.</p>
-        <p class="core-line">Accept reality. Refuse passive decline.</p>
+        <p class="section-kicker">Guided Start</p>
+        <h1 id="guide-title">Start Here</h1>
+        <p class="core-line">Read it in order. Move at your pace.</p>
         <p class="hero-copy">
-          Life isn&rsquo;t clean. It isn&rsquo;t fair. It doesn&rsquo;t wait.
-          You don&rsquo;t need it to. You act anyway.
+          This page holds the deeper frame: what Gray Mentality is, why it exists,
+          the tenets, how it shows up, and where the portal goes next.
         </p>
-        <div class="hero-signals" aria-label="Operating signals">
-          <span>Reality First</span>
-          <span>Drift Interrupted</span>
-          <span>Action Required</span>
+        <nav class="guide-nav" aria-label="Guide sections">
+          <a href="#what-this-is">What This Is</a>
+          <a href="#why-it-matters">Why It Matters</a>
+          <a href="#tenets">Tenets</a>
+          <a href="#real-life-title">Real Life</a>
+          <a href="#portal">Portal</a>
+          <a href="#start-here">Begin</a>
+        </nav>
+      </section>
+
+      <section class="clarity-section" aria-labelledby="what-this-is">
+        <div class="section-graphic section-graphic-clarity" aria-hidden="true">
+          <span></span><span></span><span></span>
         </div>
+        <p class="section-kicker">What This Is</p>
+        <h2 id="what-this-is">Gray Mentality is not something you believe.<br>It&rsquo;s how you operate.</h2>
+        <div class="clarity-stack" aria-label="What Gray Mentality is not">
+          <span>Not optimism.</span>
+          <span>Not pessimism.</span>
+          <span>Not denial.</span>
+        </div>
+        <p class="statement-line">It is clarity - followed by action.</p>
+        <div class="short-divider" aria-hidden="true"></div>
+        <p class="section-copy">You don&rsquo;t wait for life to feel right. You act because life is happening now.</p>
+      </section>
+
+      <section class="reality-section" aria-labelledby="why-it-matters">
+        <div class="section-graphic section-graphic-decline" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="split-block">
+          <div>
+            <p class="section-kicker">Why It Matters</p>
+            <h2 id="why-it-matters">Most people don&rsquo;t fail suddenly. They fade.</h2>
+          </div>
+          <div class="fade-list">
+            <span>Standards drop</span>
+            <span>Effort decreases</span>
+            <span>Time passes</span>
+          </div>
+        </div>
+        <p class="quiet-line">Quietly. Gradually. Permanently.</p>
+        <div class="long-divider" aria-hidden="true"></div>
+        <p class="decision-line">Gray Mentality exists to interrupt that.</p>
+        <p class="section-copy">Not with motivation. With decision.</p>
+      </section>
+
+      <section class="tenets-section" id="tenets" aria-labelledby="tenets-title">
+        <div class="section-heading">
+          <p class="section-kicker">Core Identity</p>
+          <h2 id="tenets-title">The Tenets of Gray Mentality</h2>
+        </div>
+        <div class="tenets-grid">
+          <?php foreach ($tenets as $index => [$title, $copy, $glyph]): ?>
+            <article class="tenet-card">
+              <div class="card-glyph card-glyph-<?= gm_landing_h($glyph) ?>" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <span class="tenet-number"><?= gm_landing_h(str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
+              <h3><?= gm_landing_h($title) ?></h3>
+              <p><?= gm_landing_h($copy) ?></p>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      </section>
+
+      <section class="real-life-section" aria-labelledby="real-life-title">
+        <div class="section-graphic section-graphic-decisions" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="section-heading">
+          <p class="section-kicker">How It Looks In Real Life</p>
+          <h2 id="real-life-title">Gray Mentality is not theory.</h2>
+          <p class="section-copy">It shows up in small decisions across the physical, mental, emotional, and practical parts of life.</p>
+        </div>
+        <div class="decision-grid">
+          <?php foreach ($realLife as $index => $item): ?>
+            <div class="decision-item">
+              <span class="decision-mark" aria-hidden="true"><?= gm_landing_h(str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT)) ?></span>
+              <?= gm_landing_h($item) ?>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <p class="statement-line">It&rsquo;s not dramatic. It&rsquo;s consistent.</p>
+      </section>
+
+      <section class="portal-section" id="portal" aria-labelledby="portal-title">
+        <div class="section-heading">
+          <p class="section-kicker">Portal</p>
+          <h2 id="portal-title">One mentality. Multiple routes.</h2>
+          <p class="section-copy">exFit is the physical discipline path. Gray Mentality also holds the non-physical concepts: clarity, recovery, emotional control, standards, and decisions.</p>
+        </div>
+        <div class="portal-grid">
+          <?php foreach ($portalPaths as [$title, $copy, $route]): ?>
+            <article class="portal-card">
+              <div class="portal-diagram portal-diagram-<?= gm_landing_h($route) ?>" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <h3><?= gm_landing_h($title) ?></h3>
+              <p><?= gm_landing_h($copy) ?></p>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      </section>
+
+      <section class="start-section" id="start-here" aria-labelledby="start-title">
+        <p class="section-kicker">Start Here</p>
+        <h2 id="start-title">You don&rsquo;t need to understand everything.</h2>
+        <p class="core-line">You need to start.</p>
         <div class="action-row">
-          <a class="action-button action-button-primary" href="<?= gm_public_url('/start') ?>">Enter the Mentality</a>
-          <a class="action-button action-button-secondary" href="<?= gm_public_url('/start') ?>">Start Here</a>
+          <button class="action-button action-button-primary" type="button" onclick="openModal('register-modal')">Begin the Discipline</button>
+          <a class="action-button action-button-secondary" href="#tenets">Read the Tenets Again</a>
+          <a class="action-button action-button-tertiary" href="<?= gm_public_url('/modules/index.php') ?>">Enter exFit</a>
         </div>
       </section>
     </main>
@@ -160,8 +286,47 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
       <p class="modal-footer-text">
         <a href="<?= gm_public_url('/reset_password.php') ?>">Forgot password?</a>
         <span>|</span>
-        <a href="<?= gm_public_url('/start') ?>">Start here</a>
+        <a href="#" onclick="switchModal('register-modal')">Register</a>
       </p>
+    </div>
+  </div>
+
+  <div id="register-modal" class="modal">
+    <div class="modal-overlay" onclick="closeModal('register-modal')"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Register</h2>
+        <button class="modal-close" onclick="closeModal('register-modal')" aria-label="Close register modal">&times;</button>
+      </div>
+      <form class="auth-form" action="<?= gm_public_url('/register.php') ?>" method="post">
+        <div class="form-group">
+          <label for="register-username">Username</label>
+          <input type="text" id="register-username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="register-email">Email</label>
+          <input type="email" id="register-email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="register-password">Password</label>
+          <input type="password" id="register-password" name="password" required>
+        </div>
+        <div class="policy-acknowledgement">
+          <p>
+            By registering, you acknowledge that you have reviewed and agree to the
+            <a href="<?= gm_public_url('/terms') ?>" target="_blank" rel="noopener">Terms of Use</a>,
+            <a href="<?= gm_public_url('/privacy') ?>" target="_blank" rel="noopener">Privacy Policy</a>, and related site policies.
+            Gray Mentality content is for general educational and operational purposes and is not medical,
+            legal, financial, or emergency advice.
+          </p>
+          <label class="checkbox-field" for="register-policy-ack">
+            <input type="checkbox" id="register-policy-ack" name="policy_ack" value="1" required>
+            <span>I acknowledge and agree.</span>
+          </label>
+        </div>
+        <button type="submit" class="auth-submit">Register</button>
+      </form>
+      <p class="modal-footer-text">Already have an account? <a href="#" onclick="switchModal('login-modal')">Login</a></p>
     </div>
   </div>
 
@@ -182,7 +347,7 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
     }
 
     const revealTargets = document.querySelectorAll(
-      '.hero-section'
+      '.guide-intro, .clarity-section, .reality-section, .tenet-card, .decision-item, .portal-card, .start-section'
     );
 
     revealTargets.forEach((target) => target.classList.add('is-revealable'));

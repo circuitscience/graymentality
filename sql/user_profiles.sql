@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: db:3306
--- Generation Time: Apr 19, 2026 at 11:18 AM
+-- Generation Time: May 03, 2026
 -- Server version: 10.6.24-MariaDB-ubu2204
 -- PHP Version: 8.3.26
 
@@ -24,15 +24,18 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `login_attempts`
+-- Table structure for table `user_profiles`
 --
 
-CREATE TABLE `login_attempts` (
+CREATE TABLE `user_profiles` (
   `id` int(11) NOT NULL,
-  `email` varchar(100) DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `attempted_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `success` tinyint(1) DEFAULT 0
+  `user_id` int(11) NOT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `gender` varchar(32) DEFAULT NULL,
+  `timezone` varchar(64) DEFAULT NULL,
+  `onboarding_completed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -40,20 +43,31 @@ CREATE TABLE `login_attempts` (
 --
 
 --
--- Indexes for table `login_attempts`
+-- Indexes for table `user_profiles`
 --
-ALTER TABLE `login_attempts`
-  ADD PRIMARY KEY (`id`);
+ALTER TABLE `user_profiles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT for table `login_attempts`
+-- AUTO_INCREMENT for table `user_profiles`
 --
-ALTER TABLE `login_attempts`
+ALTER TABLE `user_profiles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `user_profiles`
+--
+ALTER TABLE `user_profiles`
+  ADD CONSTRAINT `fk_user_profiles_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

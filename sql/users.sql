@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `jerry_bil_graymentality`
+-- Database: `jerrybil_graymentality`
 --
 
 -- --------------------------------------------------------
@@ -37,6 +37,10 @@ CREATE TABLE `users` (
   `role_id` int(11) DEFAULT 1,
   `is_active` tinyint(1) DEFAULT 1,
   `email_verified` tinyint(1) DEFAULT 0,
+  `policy_acknowledged_at` timestamp NULL DEFAULT NULL,
+  `policy_version` varchar(32) DEFAULT NULL,
+  `policy_ip_address` varchar(45) DEFAULT NULL,
+  `policy_user_agent` varchar(255) DEFAULT NULL,
   `last_login` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -46,8 +50,8 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `role_id`, `is_active`, `email_verified`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, 1, 1, '2026-04-19 15:11:40', '2026-04-15 18:26:36', '2026-04-19 15:11:40');
+INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `role_id`, `is_active`, `email_verified`, `policy_acknowledged_at`, `policy_version`, `policy_ip_address`, `policy_user_agent`, `last_login`, `created_at`, `updated_at`) VALUES
+(1, 'gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, 1, 1, NULL, NULL, NULL, NULL, '2026-04-19 15:11:40', '2026-04-15 18:26:36', '2026-04-19 15:11:40');
 
 --
 -- Indexes for dumped tables

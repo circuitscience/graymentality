@@ -83,6 +83,64 @@ function get_db_connection()
     return $pdo;
 }
 
+function auth_ensure_policy_columns(PDO $db): void
+{
+    static $checked = false;
+
+    if ($checked) {
+        return;
+    }
+
+    $checked = true;
+    $columns = [
+        'policy_acknowledged_at' => "ALTER TABLE users ADD COLUMN policy_acknowledged_at TIMESTAMP NULL DEFAULT NULL AFTER email_verified",
+        'policy_version' => "ALTER TABLE users ADD COLUMN policy_version VARCHAR(32) DEFAULT NULL AFTER policy_acknowledged_at",
+        'policy_ip_address' => "ALTER TABLE users ADD COLUMN policy_ip_address VARCHAR(45) DEFAULT NULL AFTER policy_version",
+        'policy_user_agent' => "ALTER TABLE users ADD COLUMN policy_user_agent VARCHAR(255) DEFAULT NULL AFTER policy_ip_address",
+    ];
+
+    foreach ($columns as $column => $alterSql) {
+        $stmt = $db->prepare(
+            "SELECT COUNT(*)
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = 'users'
+               AND COLUMN_NAME = ?"
+        );
+        $stmt->execute([$column]);
+
+        if ((int)$stmt->fetchColumn() === 0) {
+            $db->exec($alterSql);
+        }
+    }
+}
+
+function auth_ensure_profile_table(PDO $db): void
+{
+    static $checked = false;
+
+    if ($checked) {
+        return;
+    }
+
+    $checked = true;
+    $db->exec(
+        "CREATE TABLE IF NOT EXISTS user_profiles (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL UNIQUE,
+            date_of_birth DATE NULL,
+            gender VARCHAR(32) NULL,
+            timezone VARCHAR(64) NULL,
+            onboarding_completed_at TIMESTAMP NULL DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            CONSTRAINT fk_user_profiles_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+}
+
 function sanitize_input(string $input): string
 {
     return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
@@ -156,6 +214,11 @@ function auth_mail_from_name(): string
     return 'Gray Mentality';
 }
 
+function auth_policy_version(): string
+{
+    return '2026-05-03';
+}
+
 function auth_idle_timeout_seconds(): int
 {
     $value = (int)auth_env('AUTH_IDLE_TIMEOUT_SECONDS', '900');
@@ -188,6 +251,17 @@ function auth_login_url(array $params = []): string
     ));
 
     return '/login.php' . ($query !== '' ? '?' . $query : '');
+}
+
+function auth_profile_setup_url(): string
+{
+    return '/profile-setup';
+}
+
+function auth_redirect_to_profile_setup(): never
+{
+    header('Location: ' . auth_profile_setup_url());
+    exit;
 }
 
 function auth_login_message_for_reason(string $reason): string
@@ -337,6 +411,83 @@ function auth_mark_activity(): void
     $_SESSION['last_activity_at'] = time();
 }
 
+function auth_user_profile(int $userId): ?array
+{
+    $db = get_db_connection();
+    auth_ensure_profile_table($db);
+
+    $stmt = $db->prepare(
+        "SELECT id, user_id, date_of_birth, gender, timezone, onboarding_completed_at, created_at, updated_at
+         FROM user_profiles
+         WHERE user_id = ?
+         LIMIT 1"
+    );
+    $stmt->execute([$userId]);
+    $profile = $stmt->fetch();
+
+    return is_array($profile) ? $profile : null;
+}
+
+function auth_profile_is_complete(int $userId): bool
+{
+    $profile = auth_user_profile($userId);
+
+    return is_array($profile)
+        && trim((string)($profile['date_of_birth'] ?? '')) !== ''
+        && trim((string)($profile['gender'] ?? '')) !== ''
+        && trim((string)($profile['onboarding_completed_at'] ?? '')) !== '';
+}
+
+function auth_save_user_profile(int $userId, string $dateOfBirth, string $gender, string $timezone): array
+{
+    $dateOfBirth = trim($dateOfBirth);
+    $gender = trim($gender);
+    $timezone = trim($timezone);
+    $allowedGenders = ['male', 'female', 'non_binary', 'prefer_not_to_say'];
+
+    if ($dateOfBirth === '' || $gender === '') {
+        return ['success' => false, 'message' => 'Date of birth and gender are required.'];
+    }
+
+    $birthDate = DateTimeImmutable::createFromFormat('!Y-m-d', $dateOfBirth);
+    $birthErrors = DateTimeImmutable::getLastErrors();
+    if (
+        !$birthDate
+        || (is_array($birthErrors) && ((int)$birthErrors['warning_count'] > 0 || (int)$birthErrors['error_count'] > 0))
+        || $birthDate > new DateTimeImmutable('today')
+    ) {
+        return ['success' => false, 'message' => 'Enter a valid date of birth.'];
+    }
+
+    $age = (int)$birthDate->diff(new DateTimeImmutable('today'))->y;
+    if ($age < 13 || $age > 120) {
+        return ['success' => false, 'message' => 'Enter an age between 13 and 120.'];
+    }
+
+    if (!in_array($gender, $allowedGenders, true)) {
+        return ['success' => false, 'message' => 'Choose a valid gender option.'];
+    }
+
+    if ($timezone === '' || !in_array($timezone, timezone_identifiers_list(), true)) {
+        $timezone = 'America/Toronto';
+    }
+
+    $db = get_db_connection();
+    auth_ensure_profile_table($db);
+    $stmt = $db->prepare(
+        "INSERT INTO user_profiles (user_id, date_of_birth, gender, timezone, onboarding_completed_at)
+         VALUES (?, ?, ?, ?, NOW())
+         ON DUPLICATE KEY UPDATE
+            date_of_birth = VALUES(date_of_birth),
+            gender = VALUES(gender),
+            timezone = VALUES(timezone),
+            onboarding_completed_at = COALESCE(onboarding_completed_at, NOW())"
+    );
+    $stmt->execute([$userId, $dateOfBirth, $gender, $timezone]);
+
+    return ['success' => true, 'message' => 'Profile saved.'];
+}
+
 function queue_mail_message(string $recipientEmail, string $subject, string $bodyText): bool
 {
     $recipientEmail = normalize_email($recipientEmail);
@@ -441,14 +592,20 @@ function register_user(
     string $password,
     string $first_name,
     string $last_name,
-    string $captcha_answer = ''
+    string $captcha_answer = '',
+    bool $policy_acknowledged = false
 ): array {
     $db = get_db_connection();
+    auth_ensure_policy_columns($db);
     $username = trim($username);
     $email = normalize_email($email);
 
     if ($username === '' || $email === '' || $password === '') {
         return ['success' => false, 'message' => 'Username, email, and password are required.'];
+    }
+
+    if (!$policy_acknowledged) {
+        return ['success' => false, 'message' => 'You must acknowledge the site policies and terms before registering.'];
     }
 
     if (strlen($username) < 3 || strlen($password) < 8) {
@@ -466,11 +623,36 @@ function register_user(
     }
 
     $hash = hash_password($password);
+    $policyVersion = auth_policy_version();
+    $policyIpAddress = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
+    $policyUserAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
     $stmt = $db->prepare(
-        "INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, is_active, email_verified)
-         VALUES (?, ?, ?, ?, ?, 1, TRUE, TRUE)"
+        "INSERT INTO users (
+            username,
+            email,
+            password_hash,
+            first_name,
+            last_name,
+            role_id,
+            is_active,
+            email_verified,
+            policy_acknowledged_at,
+            policy_version,
+            policy_ip_address,
+            policy_user_agent
+        )
+         VALUES (?, ?, ?, ?, ?, 1, TRUE, TRUE, NOW(), ?, ?, ?)"
     );
-    $stmt->execute([$username, $email, $hash, trim($first_name), trim($last_name)]);
+    $stmt->execute([
+        $username,
+        $email,
+        $hash,
+        trim($first_name),
+        trim($last_name),
+        $policyVersion,
+        $policyIpAddress,
+        $policyUserAgent,
+    ]);
 
     return ['success' => true, 'message' => 'Registration successful. You can now log in.'];
 }
@@ -709,7 +891,7 @@ function check_auth(): ?array
     return $user;
 }
 
-function require_auth(): array
+function require_auth(bool $requireCompletedProfile = true): array
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
@@ -723,6 +905,10 @@ function require_auth(): array
     $user = check_auth();
     if (!$user) {
         auth_redirect_to_login('auth_required');
+    }
+
+    if ($requireCompletedProfile && !auth_profile_is_complete((int)$user['id'])) {
+        auth_redirect_to_profile_setup();
     }
 
     auth_register_timeout_modal();
