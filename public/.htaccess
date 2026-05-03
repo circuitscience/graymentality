@@ -1,10 +1,21 @@
 RewriteEngine On
 
+# Never run static assets through the PHP handler on shared hosts.
+<IfModule mod_mime.c>
+    RemoveHandler .png .jpg .jpeg .gif .webp .svg .ico .css .js .map .woff .woff2 .ttf .otf
+</IfModule>
+<FilesMatch "\.(?:png|jpe?g|gif|webp|svg|ico|css|js|map|woff2?|ttf|otf)$">
+    SetHandler none
+</FilesMatch>
+
+# Static files must be served directly.
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule \.(?:png|jpe?g|gif|webp|svg|ico|css|js|map|woff2?|ttf|otf)$ - [END]
+
 # Send every PHP request through the front controller.
 RewriteCond %{REQUEST_URI} \.php$ [NC]
 RewriteRule ^ index.php [L,QSA]
 
-# Let real files and directories serve normally; everything else becomes a route.
+# Let real non-PHP files serve normally; directories and virtual paths become routes.
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [L,QSA]
