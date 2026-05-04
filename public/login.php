@@ -47,6 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
         }
+        .auth-container h1 {
+            margin: 0 0 18px;
+            font-size: clamp(2rem, 12vw, 3rem);
+            line-height: 1;
+            overflow-wrap: normal;
+            word-break: keep-all;
+        }
         .auth-form {
             display: flex;
             flex-direction: column;
