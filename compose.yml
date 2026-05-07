@@ -10,9 +10,9 @@ services:
     environment:
       TZ: America/Toronto
       MARIADB_DATABASE: ${DB_NAME:-jerrybil_graymentality}
-      MARIADB_USER: ${DB_USER:-graymentality}
-      MARIADB_PASSWORD: ${DB_PASS:-graymentality}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MARIADB_USER: ${DB_USER:?DB_USER must be set}
+      MARIADB_PASSWORD: ${DB_PASS:?DB_PASS must be set}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD must be set}
     ports:
       - "${DB_HOST_PORT:-3307}:3306"
     volumes:

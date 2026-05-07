@@ -92,13 +92,3 @@ INSERT INTO roles (id, name, description) VALUES
 (10, 'admin', 'Administrator')
 ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description);
 
--- Insert default admin user
-INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, is_active, email_verified) VALUES
-('gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, TRUE, TRUE)
-ON DUPLICATE KEY UPDATE
-    password_hash = VALUES(password_hash),
-    first_name = VALUES(first_name),
-    last_name = VALUES(last_name),
-    role_id = VALUES(role_id),
-    is_active = VALUES(is_active),
-    email_verified = VALUES(email_verified);

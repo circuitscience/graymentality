@@ -33,7 +33,7 @@
       "driver": "MariaDB",
       "name": "mariadb",
       "database": "jerrybil_graymentality",
-      "username": "root"
+      "username": ""
     }
   ]
 }

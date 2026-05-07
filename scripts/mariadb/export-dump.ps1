@@ -45,8 +45,8 @@ function Get-GMEnvValue {
 Import-GMEnvFile -Path $EnvFile
 
 if (-not $DbName) { $DbName = Get-GMEnvValue -Key 'DB_NAME' -Default 'jerrybil_graymentality' }
-if (-not $DbUser) { $DbUser = Get-GMEnvValue -Key 'DB_USER' -Default 'graymentality' }
-if (-not $DbPass) { $DbPass = Get-GMEnvValue -Key 'DB_PASS' -Default 'graymentality' }
+if (-not $DbUser) { $DbUser = Get-GMEnvValue -Key 'DB_USER' -Default '' }
+if (-not $DbPass) { $DbPass = Get-GMEnvValue -Key 'DB_PASS' -Default '' }
 
 if (-not $OutputPath) {
     $stamp = Get-Date -Format 'yyyy-MM-dd_HH-mm'

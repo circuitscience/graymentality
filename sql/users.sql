@@ -47,13 +47,6 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `users`
---
-
-INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `role_id`, `is_active`, `email_verified`, `policy_acknowledged_at`, `policy_version`, `policy_ip_address`, `policy_user_agent`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, 1, 1, NULL, NULL, NULL, NULL, '2026-04-19 15:11:40', '2026-04-15 18:26:36', '2026-04-19 15:11:40');
-
---
 -- Indexes for dumped tables
 --
 
@@ -74,7 +67,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables

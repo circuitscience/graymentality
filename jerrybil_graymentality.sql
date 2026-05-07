@@ -303,14 +303,6 @@ CREATE TABLE `mail_queue` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `mail_queue`
---
-
-INSERT INTO `mail_queue` (`id`, `recipient_email`, `subject`, `body_text`, `status`, `attempts`, `available_at`, `last_attempt_at`, `sent_at`, `last_error`, `created_at`, `updated_at`) VALUES
-(1, 'gray@graymentality.ca', 'Gray Mentality password reset', 'A password reset was requested for your Gray Mentality account.\n\nReset link: http://localhost:8088/reset_password.php?token=88ead2a1f34ad28abf7f0c3aa3e1168873df01e3c018516838e0a10d5ddf770d\nThis link expires in 1 hour.\n\nIf you did not request this change, you can ignore this message.', 'pending', 1, '2026-04-18 19:05:01', '2026-04-18 14:50:01', NULL, 'Unable to connect to SMTP server smtp.example.com:587: php_network_getaddresses: getaddrinfo for smtp.example.com failed: Name or service not known', '2026-04-18 18:03:55', '2026-04-18 18:50:01'),
-(2, 'gray@graymentality.ca', 'Gray Mentality password reset', 'A password reset was requested for your Gray Mentality account.\n\nReset link: http://localhost:8088/reset_password.php?token=483d25dfd1b7b1b010e40ddd666259a53ff32a48d983d99440da0d1aaa865def\nThis link expires in 1 hour.\n\nIf you did not request this change, you can ignore this message.', 'pending', 1, '2026-04-18 19:05:01', '2026-04-18 14:50:01', NULL, 'Unable to connect to SMTP server smtp.example.com:587: php_network_getaddresses: getaddrinfo for smtp.example.com failed: Name or service not known', '2026-04-18 18:23:41', '2026-04-18 18:50:01');
-
 -- --------------------------------------------------------
 
 --
@@ -439,13 +431,6 @@ CREATE TABLE `password_resets` (
   `expires_at` datetime NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `password_resets`
---
-
-INSERT INTO `password_resets` (`id`, `email`, `token`, `expires_at`, `created_at`) VALUES
-(1, 'gray@graymentality.ca', '483d25dfd1b7b1b010e40ddd666259a53ff32a48d983d99440da0d1aaa865def', '2026-04-18 19:23:41', '2026-04-18 17:27:17');
 
 -- --------------------------------------------------------
 
@@ -612,13 +597,6 @@ CREATE TABLE `users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `users`
---
-
-INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `first_name`, `last_name`, `role_id`, `is_active`, `email_verified`, `policy_acknowledged_at`, `policy_version`, `policy_ip_address`, `policy_user_agent`, `last_login`, `created_at`, `updated_at`) VALUES
-(1, 'gray', 'gray@graymentality.ca', '$2y$12$5rZbco3Upn8hUed3cRUtF.jfjGxt5qPMJeQYXPHblACLi3g4RXIX.', 'jerry', 'bilous', 10, 1, 1, NULL, NULL, NULL, NULL, '2026-04-25 17:16:57', '2026-04-15 18:26:36', '2026-04-25 17:16:57');
 
 -- --------------------------------------------------------
 
@@ -876,7 +854,7 @@ ALTER TABLE `audio_tracks`
 -- AUTO_INCREMENT for table `auth_sessions`
 --
 ALTER TABLE `auth_sessions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `bmr_logs`
@@ -888,7 +866,7 @@ ALTER TABLE `bmr_logs`
 -- AUTO_INCREMENT for table `body_comp_logs`
 --
 ALTER TABLE `body_comp_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `calories_log`
@@ -906,25 +884,25 @@ ALTER TABLE `creatine_logs`
 -- AUTO_INCREMENT for table `frame_potential_logs`
 --
 ALTER TABLE `frame_potential_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `gm_slides`
 --
 ALTER TABLE `gm_slides`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `grip_logs`
 --
 ALTER TABLE `grip_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `hydration_logs`
 --
 ALTER TABLE `hydration_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `login_attempts`
@@ -936,13 +914,13 @@ ALTER TABLE `login_attempts`
 -- AUTO_INCREMENT for table `mail_queue`
 --
 ALTER TABLE `mail_queue`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `motivation_chants`
 --
 ALTER TABLE `motivation_chants`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `motivation_sessions`
@@ -978,7 +956,7 @@ ALTER TABLE `nutrition_profiles`
 -- AUTO_INCREMENT for table `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `protein_intake_logs`
@@ -996,7 +974,7 @@ ALTER TABLE `protein_logs`
 -- AUTO_INCREMENT for table `recovery_prompts`
 --
 ALTER TABLE `recovery_prompts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `recovery_sessions`
@@ -1026,7 +1004,7 @@ ALTER TABLE `sleep_recovery_logs`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `user_profiles`

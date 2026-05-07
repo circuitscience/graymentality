@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
 
+const GM_BACKUP_ARCHIVE_LIMIT_ENV = 'DB_BACKUP_ARCHIVE_LIMIT';
+const GM_BACKUP_DEFAULT_ARCHIVE_LIMIT = 25;
+
 /**
  * Database backup runner for cron.
  *
@@ -14,8 +17,7 @@ require_once __DIR__ . '/bootstrap.php';
  * - DB_PASS
  * - DB_CHARSET (optional, default utf8mb4)
  * - DB_BACKUP_DIR (optional, default runtime/backups/db)
- * - DB_BACKUP_PREFIX (optional, default graymentality)
- * - DB_BACKUP_KEEP_DAYS (optional, default 14)
+ * - DB_BACKUP_ARCHIVE_LIMIT (optional, default 25)
  * - DB_BACKUP_COMPRESS (optional, default true)
  */
 
@@ -67,17 +69,71 @@ function gm_backup_close_output_stream($handle, bool $compress): void
     fclose($handle);
 }
 
-function gm_backup_prune_old_files(string $directory, string $prefix, int $keepDays): array
+function gm_backup_is_database_backup_file(string $path, string $databaseName): bool
 {
-    $deleted = [];
-    if ($keepDays < 1 || !is_dir($directory)) {
-        return $deleted;
+    if (!is_file($path)) {
+        return false;
     }
 
-    $cutoff = time() - ($keepDays * 86400);
-    $items = scandir($directory);
+    $filename = basename($path);
+    if (!str_contains($filename, $databaseName)) {
+        return false;
+    }
+
+    return str_ends_with($filename, '.sql') || str_ends_with($filename, '.sql.gz');
+}
+
+function gm_backup_archive_previous_files(
+    string $backupDirectory,
+    string $archiveDirectory,
+    string $currentBackupPath,
+    string $databaseName,
+    int $archiveLimit
+): array {
+    $result = [
+        'archived' => [],
+        'deleted' => [],
+    ];
+
+    gm_cron_ensure_directory($archiveDirectory);
+
+    $items = scandir($backupDirectory);
     if ($items === false) {
-        return $deleted;
+        return $result;
+    }
+
+    $currentRealPath = realpath($currentBackupPath) ?: $currentBackupPath;
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+
+        $path = $backupDirectory . DIRECTORY_SEPARATOR . $item;
+        if ($path === $currentBackupPath || (realpath($path) ?: $path) === $currentRealPath) {
+            continue;
+        }
+
+        if (!gm_backup_is_database_backup_file($path, $databaseName)) {
+            continue;
+        }
+
+        $destination = $archiveDirectory . DIRECTORY_SEPARATOR . $item;
+        if (is_file($destination)) {
+            $pathInfo = pathinfo($item);
+            $extension = isset($pathInfo['extension']) && $pathInfo['extension'] !== '' ? '.' . $pathInfo['extension'] : '';
+            $baseName = substr($item, 0, strlen($item) - strlen($extension));
+            $destination = $archiveDirectory . DIRECTORY_SEPARATOR . $baseName . '_' . time() . $extension;
+        }
+
+        if (@rename($path, $destination)) {
+            $result['archived'][] = basename($destination);
+        }
+    }
+
+    $archiveFiles = [];
+    $items = scandir($archiveDirectory);
+    if ($items === false) {
+        return $result;
     }
 
     foreach ($items as $item) {
@@ -85,33 +141,36 @@ function gm_backup_prune_old_files(string $directory, string $prefix, int $keepD
             continue;
         }
 
-        if (!str_starts_with($item, $prefix . '_')) {
+        $path = $archiveDirectory . DIRECTORY_SEPARATOR . $item;
+        if (!gm_backup_is_database_backup_file($path, $databaseName)) {
             continue;
         }
 
-        $path = $directory . DIRECTORY_SEPARATOR . $item;
-        if (!is_file($path)) {
-            continue;
-        }
+        $archiveFiles[] = [
+            'path' => $path,
+            'name' => $item,
+            'modified_at' => filemtime($path) ?: 0,
+        ];
+    }
 
-        $modifiedAt = filemtime($path);
-        if ($modifiedAt === false || $modifiedAt >= $cutoff) {
-            continue;
-        }
+    usort(
+        $archiveFiles,
+        static fn (array $a, array $b): int => $b['modified_at'] <=> $a['modified_at']
+    );
 
-        if (@unlink($path)) {
-            $deleted[] = $item;
+    foreach (array_slice($archiveFiles, max(0, $archiveLimit)) as $file) {
+        if (@unlink((string)$file['path'])) {
+            $result['deleted'][] = (string)$file['name'];
         }
     }
 
-    return $deleted;
+    return $result;
 }
 
 try {
     $projectRoot = gm_cron_project_root();
     $backupDirectory = gm_cron_env('DB_BACKUP_DIR', $projectRoot . DIRECTORY_SEPARATOR . 'runtime' . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR . 'db') ?? '';
-    $backupPrefix = trim((string)gm_cron_env('DB_BACKUP_PREFIX', 'graymentality'));
-    $keepDays = max(1, gm_cron_int_env('DB_BACKUP_KEEP_DAYS', 14));
+    $archiveLimit = max(1, gm_cron_int_env(GM_BACKUP_ARCHIVE_LIMIT_ENV, GM_BACKUP_DEFAULT_ARCHIVE_LIMIT));
     $compress = gm_cron_bool_env('DB_BACKUP_COMPRESS', true);
 
     $dbHost = trim((string)gm_cron_env('DB_HOST', '127.0.0.1'));
@@ -123,10 +182,6 @@ try {
 
     if ($backupDirectory === '') {
         throw new RuntimeException('DB_BACKUP_DIR cannot be empty.');
-    }
-
-    if ($backupPrefix === '') {
-        $backupPrefix = 'graymentality';
     }
 
     if ($dbName === '' || $dbUser === '') {
@@ -147,7 +202,8 @@ try {
     }
 
     $timestamp = (new DateTimeImmutable('now', new DateTimeZone(gm_cron_env('TZ', 'America/Toronto') ?? 'America/Toronto')))->format('Y-m-d_H-i-s');
-    $baseName = sprintf('%s_%s_%s.sql', $backupPrefix, preg_replace('/[^A-Za-z0-9_-]+/', '_', $dbName) ?: 'database', $timestamp);
+    $safeDbName = preg_replace('/[^A-Za-z0-9_-]+/', '_', $dbName) ?: 'database';
+    $baseName = sprintf('%s_%s.sql', $safeDbName, $timestamp);
     $backupPath = $backupDirectory . DIRECTORY_SEPARATOR . $baseName . ($compress ? '.gz' : '');
     $stderrPath = tempnam($backupDirectory, 'backup-stderr-');
     if ($stderrPath === false) {
@@ -236,14 +292,22 @@ try {
     }
 
     @unlink($stderrPath);
-    $deleted = gm_backup_prune_old_files($backupDirectory, $backupPrefix, $keepDays);
+    $archiveDirectory = $backupDirectory . DIRECTORY_SEPARATOR . 'archive';
+    $archiveResult = gm_backup_archive_previous_files(
+        $backupDirectory,
+        $archiveDirectory,
+        $backupPath,
+        $safeDbName,
+        $archiveLimit
+    );
 
     fwrite(
         STDOUT,
         sprintf(
-            "Backup complete: %s%s\n",
+            "Backup complete: %s%s%s\n",
             $backupPath,
-            $deleted !== [] ? ' | pruned: ' . implode(', ', $deleted) : ''
+            $archiveResult['archived'] !== [] ? ' | archived: ' . count($archiveResult['archived']) : '',
+            $archiveResult['deleted'] !== [] ? ' | deleted from archive: ' . implode(', ', $archiveResult['deleted']) : ''
         )
     );
 

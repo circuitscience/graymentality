@@ -1,20 +1,169 @@
+:root {
+    --workout-bg: #050507;
+    --workout-panel: rgba(15, 17, 24, 0.94);
+    --workout-line: rgba(255, 255, 255, 0.15);
+    --workout-text: #f4f1ea;
+    --workout-muted: #aaa39b;
+    --workout-orange: #ff6a00;
+    --workout-purple: #9b5cff;
+}
+
+html {
+    color-scheme: dark;
+}
+
 .xfit-module {
-    background: #0b0b0b;
-    color: #eee;
-    font-family: system-ui, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    color: var(--workout-text);
+    font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        radial-gradient(circle at 15% 10%, rgba(155, 92, 255, 0.22), transparent 30%),
+        radial-gradient(circle at 84% 14%, rgba(255, 106, 0, 0.18), transparent 28%),
+        linear-gradient(180deg, #050507, #11131a 50%, #050507);
+    background-size: 72px 72px, 72px 72px, auto, auto, auto;
+}
+
+.workout-shell {
+    width: min(980px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 48px;
+}
+
+.module-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    color: var(--workout-muted);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.module-nav a {
+    color: var(--workout-text);
+    text-decoration: none;
+}
+
+.module-header {
+    border: 1px solid var(--workout-line);
+    background:
+        linear-gradient(135deg, rgba(255, 106, 0, 0.16), transparent 42%),
+        linear-gradient(315deg, rgba(155, 92, 255, 0.14), transparent 48%),
+        var(--workout-panel);
+    padding: clamp(26px, 5vw, 48px);
+}
+
+.eyebrow,
+.phase-label {
+    color: var(--workout-orange);
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+    margin-top: 0;
+}
+
+h1 {
+    max-width: 760px;
+    margin-bottom: 16px;
+    font-size: clamp(2.8rem, 9vw, 6.8rem);
+    line-height: 0.9;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.module-header p:last-child,
+.phase p {
+    color: var(--workout-muted);
+    font-size: clamp(1rem, 1.7vw, 1.18rem);
+    line-height: 1.6;
 }
 
 .phase {
     display: none;
-    max-width: 600px;
-    margin: auto;
-    padding: 2rem;
+    margin-top: 18px;
+    border: 1px solid var(--workout-line);
+    background: rgba(15, 17, 24, 0.88);
+    padding: clamp(22px, 4vw, 34px);
 }
 
 .phase.active {
     display: block;
 }
 
+.phase h2 {
+    margin: 10px 0 18px;
+    font-size: clamp(1.8rem, 5vw, 3.4rem);
+    line-height: 0.95;
+    text-transform: uppercase;
+}
+
+.phase ul {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.phase li {
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.phase label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    color: var(--workout-text);
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--workout-orange);
+}
+
 button {
-    margin-top: 1.5rem;
+    min-height: 46px;
+    margin-top: 24px;
+    border: 1px solid var(--workout-orange);
+    border-radius: 0;
+    background: var(--workout-orange);
+    color: #07080b;
+    padding: 0 18px;
+    font: inherit;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+button:hover {
+    border-color: var(--workout-purple);
+    background: var(--workout-purple);
+}
+
+@media (max-width: 620px) {
+    .workout-shell {
+        width: min(100% - 22px, 980px);
+        padding-top: 18px;
+    }
+
+    h1 {
+        font-size: clamp(2.35rem, 15vw, 4rem);
+    }
 }

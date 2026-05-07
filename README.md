@@ -38,9 +38,9 @@ Recommended local `.env` values for this Docker-based dev setup:
 - `DB_HOST=127.0.0.1`
 - `DB_PORT=3307`
 - `DB_NAME=jerrybil_graymentality`
-- `DB_USER=jerry_bil_gm`
-- `DB_PASS=!GM263e11`
-- `DB_ROOT_PASSWORD=root`
+- `DB_USER=your_database_user`
+- `DB_PASS=your_database_password`
+- `DB_ROOT_PASSWORD=your_local_root_password`
 - `DB_CHARSET=utf8mb4`
 
 Inside the Docker network, the `web` and `cron` containers connect to MariaDB at `db:3306`. The `3307` value above is the host-side mapped port so this project does not collide with xFit on `3306`.
@@ -64,8 +64,8 @@ Outbound mail:
 - password reset requests are queued in `mail_queue`
 - run `php scripts/cron/process_mail_queue.php` from cron to send queued mail; the sample crontab writes to `runtime/logs/cron/mail-runner.log`
 - the Docker cron container runs the mail runner every 5 minutes
-- run `php scripts/cron/backup_database.php` from cron to create database backups in `runtime/backups/db`
-- the Docker cron container runs the backup job daily at `02:30` America/Toronto and logs to `runtime/logs/cron/db-backup.log`
+- run `sh scripts/cron/run_backup_database.sh` from cron to create database backups in `runtime/backups/db`
+- the Docker cron container runs the backup job daily at `02:30` America/Toronto and logs to `runtime/logs/cron/db-backup/log`
 - the sample cron entries add timestamped `START` and `END` markers with exit codes around each run
 - the cron scripts load the same env file selection as the web bootstrap, including `APP_ENV_FILE=.env.staging`
 - set `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, and `MAIL_SMTP_ENCRYPTION` in `.env`
@@ -74,11 +74,13 @@ Outbound mail:
 Database backups:
 
 - backups are written to `runtime/backups/db`
-- default retention is `14` days
+- backup filenames use only the database name and timestamp, for example `jerrybil_graymentality_2026-05-06_16-05-07.sql.gz`
+- the current backup remains in `runtime/backups/db`
+- older matching backups are moved to `runtime/backups/db/archive`
+- the archive keeps the newest `25` backups by default
 - backups are gzip-compressed by default
 - set `DB_BACKUP_DIR` to change the output directory
-- set `DB_BACKUP_PREFIX` to change the filename prefix
-- set `DB_BACKUP_KEEP_DAYS` to control retention
+- set `DB_BACKUP_ARCHIVE_LIMIT` to control archive retention count
 - set `DB_BACKUP_COMPRESS=false` to write plain `.sql` files instead of `.sql.gz`
 
 Runtime config:
@@ -89,7 +91,7 @@ Runtime config:
 - run `pwsh ./dev-up.ps1` for Docker or `pwsh ./serve-local.ps1` for local PHP
 - web preview is on `http://localhost:8088`
 - mail cron runs in the `cron` container and writes to `runtime/logs/cron/mail-runner.log`
-- db backup cron runs in the `cron` container and writes to `runtime/logs/cron/db-backup.log`
+- db backup cron runs in the `cron` container and writes to `runtime/logs/cron/db-backup/log`
 - MariaDB is exposed on `127.0.0.1:3307`
 - phpMyAdmin is on `http://localhost:8090`
 - the bootstrap and cron scripts still load `.env` by default unless the server sets `GM_ENV_FILE` or `APP_ENV_FILE`, for example `APP_ENV_FILE=.env.staging`
