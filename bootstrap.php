@@ -129,6 +129,11 @@ function gm_public_url(string $path = '/'): string
     return $path;
 }
 
+function gm_logo_url(): string
+{
+    return gm_public_url((string)gm_bootstrap_env('GM_LOGO_PATH', '/assets/images/logo.png'));
+}
+
 function gm_bootstrap_root(): string
 {
     $guesses = array_filter([
@@ -209,8 +214,9 @@ $dbPort = (int)gm_bootstrap_db_port('3306');
 $dbCharset = gm_bootstrap_env('DB_CHARSET', 'utf8mb4');
 
 $conn = null;
+$mysqliAvailable = class_exists('mysqli') && function_exists('mysqli_report');
 
-if ($dbHost !== null && $dbName !== null && $dbUser !== null) {
+if ($mysqliAvailable && $dbHost !== null && $dbName !== null && $dbUser !== null) {
     mysqli_report(MYSQLI_REPORT_OFF);
     $conn = @new mysqli($dbHost, $dbUser, (string)$dbPass, $dbName, $dbPort);
 
@@ -232,5 +238,5 @@ if ($dbHost !== null && $dbName !== null && $dbUser !== null) {
 }
 
 if (!defined('GM_LANDING_DB_READY')) {
-    define('GM_LANDING_DB_READY', $conn instanceof mysqli);
+    define('GM_LANDING_DB_READY', $mysqliAvailable && $conn instanceof mysqli);
 }

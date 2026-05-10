@@ -307,6 +307,8 @@ $hasResults = ($resultScenarios['A'] !== null || $resultScenarios['B'] !== null)
             font-size: 1rem;
             font-weight: 600;
             letter-spacing: 0.03em;
+            object-fit: contain;
+            flex: 0 0 auto;
         }
 
         .module-subtitle {
@@ -393,6 +395,8 @@ $hasResults = ($resultScenarios['A'] !== null || $resultScenarios['B'] !== null)
             font-weight: 700;
             font-size: 0.9rem;
             letter-spacing: 0.03em;
+            object-fit: contain;
+            flex: 0 0 auto;
         }
 
         .brand-text h1 {
@@ -776,7 +780,7 @@ $hasResults = ($resultScenarios['A'] !== null || $resultScenarios['B'] !== null)
                 <div class="page-wrap">
                     <header class="lab-header">
                         <div class="brand">
-                            <div class="brand-logo">ex</div>
+                            <img class="brand-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
                             <div class="brand-text">
                                 <h1>Weight Trajectory Lab</h1>
                                 <p>Two scenarios. Same you. Different long-term slope.</p>

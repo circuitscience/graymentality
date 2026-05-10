@@ -177,13 +177,12 @@ $stmt->close();
             gap: 0.6rem;
         }
 
-        h1 span.logo-dot {
+        h1 .title-logo {
             display: inline-flex;
-            width: 1.7rem;
-            height: 1.7rem;
-            border-radius: 999px;
-            background: conic-gradient(from 0deg, var(--accent), var(--accent-purple), var(--accent));
-            box-shadow: 0 0 18px rgba(248, 113, 113, 0.8);
+            width: 2.25rem;
+            height: 2.25rem;
+            object-fit: contain;
+            flex: 0 0 auto;
         }
 
         h1 small {
@@ -383,7 +382,7 @@ $stmt->close();
     <div class="card">
         <header>
             <h1>
-                <span class="logo-dot"></span>
+                <img class="title-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
                 BMR Logs
                 <small>exFIT metabolic snapshots</small>
             </h1>

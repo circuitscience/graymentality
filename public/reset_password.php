@@ -81,6 +81,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
         }
+        .auth-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .auth-title h1 {
+            margin: 0;
+        }
+        .auth-title-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
         .auth-form {
             display: flex;
             flex-direction: column;
@@ -141,7 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="auth-container">
-        <h1>Reset Password</h1>
+        <div class="auth-title">
+            <img class="auth-title-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
+            <h1>Reset Password</h1>
+        </div>
         <p style="color: var(--muted); margin-top: 0;">
             Use your email to request a reset. If you already have a token link, you can set a new password immediately.
         </p>

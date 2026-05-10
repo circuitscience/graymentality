@@ -60,6 +60,113 @@ function gm_dashboard_format_last_login(?string $value): string
     }
 }
 
+function gm_dashboard_featured_article(PDO $db): ?array
+{
+    try {
+        $stmt = $db->query(
+            "SELECT `date`, author, title, `text`, image
+             FROM general_articles
+             WHERE COALESCE(title, '') <> '' AND COALESCE(`text`, '') <> ''
+             ORDER BY RAND()
+             LIMIT 1"
+        );
+        $row = $stmt ? $stmt->fetch(PDO::FETCH_ASSOC) : false;
+
+        return is_array($row) ? $row : null;
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+function gm_dashboard_article_excerpt(?string $text, int $maxLength = 260): string
+{
+    $plain = trim((string)$text);
+    $plain = html_entity_decode(strip_tags($plain), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $plain = preg_replace('/\s+/', ' ', $plain) ?? $plain;
+    $plain = trim($plain);
+
+    if ($plain === '') {
+        return '';
+    }
+
+    $sentences = preg_split('/(?<=[.!?])\s+/', $plain, 4, PREG_SPLIT_NO_EMPTY);
+    $excerpt = '';
+    foreach ($sentences ?: [] as $sentence) {
+        $candidate = trim($excerpt . ' ' . $sentence);
+        if ($excerpt !== '' && strlen($candidate) > $maxLength) {
+            break;
+        }
+        $excerpt = $candidate;
+        if (count($sentences) > 1 && substr_count($excerpt, '.') + substr_count($excerpt, '!') + substr_count($excerpt, '?') >= 2) {
+            break;
+        }
+    }
+
+    if ($excerpt === '') {
+        $excerpt = $plain;
+    }
+
+    if (strlen($excerpt) > $maxLength) {
+        $excerpt = rtrim(substr($excerpt, 0, $maxLength - 1));
+        $lastSpace = strrpos($excerpt, ' ');
+        if ($lastSpace !== false && $lastSpace > 80) {
+            $excerpt = substr($excerpt, 0, $lastSpace);
+        }
+        $excerpt .= '...';
+    }
+
+    return $excerpt;
+}
+
+function gm_dashboard_format_article_date(?string $value): string
+{
+    if (!$value) {
+        return 'Article';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('M j, Y');
+    } catch (Throwable $e) {
+        return $value;
+    }
+}
+
+function gm_dashboard_article_image(?string $value): string
+{
+    $image = trim((string)$value);
+    if ($image === '') {
+        return '';
+    }
+
+    if (preg_match('#^(https?://|/|data:)#i', $image)) {
+        return $image;
+    }
+
+    $publicRoot = dirname(__DIR__);
+    $candidates = [
+        $image,
+        'assets/images/' . $image,
+        'modules/assets/' . $image,
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (is_file($publicRoot . '/' . ltrim($candidate, '/'))) {
+            return '/' . ltrim($candidate, '/');
+        }
+    }
+
+    return '/' . ltrim($image, '/');
+}
+
+function gm_dashboard_article_ref(array $article): string
+{
+    return 'key-' . substr(hash('sha256', implode('|', [
+        (string)($article['date'] ?? ''),
+        (string)($article['author'] ?? ''),
+        (string)($article['title'] ?? ''),
+    ])), 0, 16);
+}
+
 $user = gm_dashboard_user($db, (int)$authUser['id']);
 $displayName = trim((string)($user['first_name'] ?? '') . ' ' . (string)($user['last_name'] ?? ''));
 if ($displayName === '') {
@@ -85,6 +192,7 @@ $labs = [
         'copy' => 'Estimate baseline calories and maintenance needs.',
         'route' => '/modules/bmr/index.php',
         'asset' => '/modules/assets/bmr.png',
+        'icon' => 'B',
     ],
     [
         'title' => 'Weight Trend',
@@ -92,6 +200,7 @@ $labs = [
         'copy' => 'Track bodyweight, calorie direction, and trend movement.',
         'route' => '/modules/weight_loss/index.php',
         'asset' => '/modules/assets/weight_loss.png',
+        'icon' => 'W',
     ],
     [
         'title' => 'Protein Intake',
@@ -99,13 +208,16 @@ $labs = [
         'copy' => 'Set daily protein targets and keep intake accountable.',
         'route' => '/modules/protein_intake/index.php',
         'asset' => '/modules/assets/protein.png',
+        'icon' => 'P',
     ],
     [
         'title' => 'Creatine',
         'label' => 'Guide',
         'copy' => 'Supplement guidance and intake history.',
         'route' => '/modules/creatine/index.php',
-        'asset' => '/modules/assets/creatine.png',
+        'asset' => '/modules/assets/ai/creatine.png',
+        'icon' => 'C',
+        'icon_asset' => '/modules/assets/icons/creatine.svg',
     ],
     [
         'title' => 'Hydration',
@@ -113,6 +225,7 @@ $labs = [
         'copy' => 'Record water intake and daily hydration habits.',
         'route' => '/modules/hydration/index.php',
         'asset' => '/modules/assets/hydration.png',
+        'icon' => 'H',
     ],
     [
         'title' => 'Sleep',
@@ -120,6 +233,7 @@ $labs = [
         'copy' => 'Track sleep consistency and recovery context.',
         'route' => '/modules/sleep/index.php',
         'asset' => '/modules/assets/recovery.png',
+        'icon' => 'S',
     ],
     [
         'title' => 'Recovery',
@@ -127,6 +241,7 @@ $labs = [
         'copy' => 'Capture recovery notes, prompts, and reset sessions.',
         'route' => '/modules/sleep_recovery/index.php',
         'asset' => '/modules/assets/recovery1.png',
+        'icon' => 'R',
     ],
     [
         'title' => 'Frame Potential',
@@ -134,6 +249,7 @@ $labs = [
         'copy' => 'Review build indicators, leverage, and structural context.',
         'route' => '/modules/frame_potential/index.php',
         'asset' => '/modules/assets/frame_potential.png',
+        'icon' => 'F',
     ],
     [
         'title' => 'Muscle Growth',
@@ -141,6 +257,7 @@ $labs = [
         'copy' => 'Track bodyweight and growth signals over time.',
         'route' => '/modules/muscle_growth/index.php',
         'asset' => '/modules/assets/muscle_growth.png',
+        'icon' => 'M',
     ],
 ];
 
@@ -179,6 +296,10 @@ $mentalityItems = [
 
 $currentDate = (new DateTimeImmutable('now', new DateTimeZone('America/Toronto')))->format('F j, Y');
 $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string)$user['last_login'] : null);
+$featuredArticle = gm_dashboard_featured_article($db);
+$featuredArticleExcerpt = $featuredArticle ? gm_dashboard_article_excerpt(isset($featuredArticle['text']) ? (string)$featuredArticle['text'] : '') : '';
+$featuredArticleImage = $featuredArticle ? gm_dashboard_article_image(isset($featuredArticle['image']) ? (string)$featuredArticle['image'] : '') : '';
+$featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' . rawurlencode(gm_dashboard_article_ref($featuredArticle)) : '/modules/Library/index.php';
 ?>
 <!doctype html>
 <html lang="en">
@@ -236,6 +357,20 @@ $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string
         }
 
         .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            display: block;
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+
+        .brand-copy {
             display: grid;
             gap: 4px;
         }
@@ -389,6 +524,67 @@ $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string
             padding: clamp(22px, 4vw, 34px);
         }
 
+        .article-card {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+            gap: clamp(18px, 3vw, 34px);
+            align-items: stretch;
+            margin-top: 22px;
+            overflow: hidden;
+        }
+
+        .article-media {
+            min-height: 240px;
+            background:
+                linear-gradient(135deg, rgba(255, 106, 0, 0.18), transparent 42%),
+                linear-gradient(315deg, rgba(155, 92, 255, 0.16), transparent 48%),
+                rgba(255, 255, 255, 0.04);
+        }
+
+        .article-media img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 240px;
+            object-fit: cover;
+        }
+
+        .article-body {
+            padding: clamp(22px, 4vw, 38px);
+            align-self: center;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+            color: var(--dash-soft);
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .article-card h2 {
+            margin-bottom: 12px;
+            font-size: clamp(1.8rem, 4vw, 3.8rem);
+            line-height: 0.95;
+            text-transform: uppercase;
+        }
+
+        .article-card p {
+            max-width: 760px;
+            margin-bottom: 0;
+            color: var(--dash-muted);
+            line-height: 1.6;
+        }
+
+        .article-actions {
+            margin-top: 20px;
+        }
+
         .section-head {
             display: flex;
             justify-content: space-between;
@@ -431,6 +627,30 @@ $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string
             display: grid;
             align-content: end;
             padding: 16px;
+        }
+
+        .lab-card-icon {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 1;
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(5, 5, 7, 0.68);
+            color: var(--dash-text);
+            font-size: 0.9rem;
+            font-weight: 800;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .lab-card-icon img {
+            display: block;
+            width: 24px;
+            height: 24px;
         }
 
         .lab-card::before {
@@ -550,6 +770,7 @@ $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string
 
         @media (max-width: 980px) {
             .hero,
+            .article-card,
             .split {
                 grid-template-columns: 1fr;
             }
@@ -598,11 +819,15 @@ $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string
     <div class="dashboard">
         <header class="topbar">
             <a class="brand" href="/modules/index.php" aria-label="Gray Mentality dashboard">
-                <span>Gray Mentality</span>
-                <strong>Dashboard</strong>
+                <img class="brand-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
+                <span class="brand-copy">
+                    <span>Gray Mentality</span>
+                    <strong>Dashboard</strong>
+                </span>
             </a>
             <nav class="top-actions" aria-label="Dashboard actions">
                 <a class="chip" href="#labs">Labs</a>
+                <a class="chip" href="/modules/Library/index.php">Library</a>
                 <a class="chip" href="#xfit">xFit</a>
                 <a class="chip" href="#mentality">Mentality</a>
                 <a class="chip" href="/profile-setup">Profile</a>
@@ -648,6 +873,32 @@ $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string
                 </aside>
             </section>
 
+            <?php if ($featuredArticle): ?>
+                <article class="article-card panel">
+                    <div class="article-media">
+                        <?php if ($featuredArticleImage !== ''): ?>
+                            <img src="<?= gm_dashboard_h($featuredArticleImage) ?>" alt="">
+                        <?php endif; ?>
+                    </div>
+                    <div class="article-body">
+                        <p class="eyebrow">Featured Article</p>
+                        <div class="article-meta">
+                            <span><?= gm_dashboard_h(gm_dashboard_format_article_date(isset($featuredArticle['date']) ? (string)$featuredArticle['date'] : null)) ?></span>
+                            <?php if (!empty($featuredArticle['author'])): ?>
+                                <span><?= gm_dashboard_h((string)$featuredArticle['author']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <h2><?= gm_dashboard_h((string)$featuredArticle['title']) ?></h2>
+                        <?php if ($featuredArticleExcerpt !== ''): ?>
+                            <p><?= gm_dashboard_h($featuredArticleExcerpt) ?></p>
+                        <?php endif; ?>
+                        <div class="article-actions">
+                            <a class="button" href="<?= gm_dashboard_h($featuredArticleUrl) ?>">Read Article</a>
+                        </div>
+                    </div>
+                </article>
+            <?php endif; ?>
+
             <section class="section panel" id="labs">
                 <div class="section-head">
                     <div>
@@ -668,6 +919,13 @@ $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string
                             href="<?= gm_dashboard_h($lab['route']) ?>"
                             style="--card-image: url('<?= gm_dashboard_h($lab['asset']) ?>');"
                         >
+                            <span class="lab-card-icon" aria-hidden="true">
+                                <?php if (isset($lab['icon_asset'])): ?>
+                                    <img src="<?= gm_dashboard_h($lab['icon_asset']) ?>" alt="">
+                                <?php else: ?>
+                                    <?= gm_dashboard_h($lab['icon']) ?>
+                                <?php endif; ?>
+                            </span>
                             <div class="lab-card-content">
                                 <span class="card-label"><?= gm_dashboard_h($lab['label']) ?></span>
                                 <h3><?= gm_dashboard_h($lab['title']) ?></h3>

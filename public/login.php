@@ -5,10 +5,12 @@ require_once __DIR__ . '/auth_functions.php';
 
 $message = trim((string)($_GET['message'] ?? ''));
 $messageType = $message !== '' ? 'success' : '';
+$next = auth_safe_next_path(isset($_GET['next']) ? (string)$_GET['next'] : null, '/modules/index.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string)($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
+    $next = auth_safe_next_path(isset($_POST['next']) ? (string)$_POST['next'] : $next, '/modules/index.php');
 
     try {
         $result = login_user($email, $password);
@@ -23,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userId = (int)($_SESSION['user_id'] ?? 0);
         $target = $userId > 0 && !auth_profile_is_complete($userId)
             ? auth_profile_setup_url()
-            : '/modules/index.php';
+            : $next;
 
         header('Location: ' . $target);
         exit;
@@ -53,6 +55,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             line-height: 1;
             overflow-wrap: normal;
             word-break: keep-all;
+        }
+        .auth-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .auth-title h1 {
+            margin: 0;
+        }
+        .auth-title-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            flex: 0 0 auto;
         }
         .auth-form {
             display: flex;
@@ -105,13 +122,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="auth-container">
-        <h1>Login</h1>
+        <div class="auth-title">
+            <img class="auth-title-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
+            <h1>Login</h1>
+        </div>
         <?php if ($message): ?>
             <div class="message <?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?>">
                 <?= htmlspecialchars($message) ?>
             </div>
         <?php endif; ?>
         <form class="auth-form" method="post">
+            <input type="hidden" name="next" value="<?= htmlspecialchars($next, ENT_QUOTES, 'UTF-8') ?>">
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required>

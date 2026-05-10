@@ -150,6 +150,7 @@ input {
 .brand {
   display: inline-flex;
   align-items: center;
+  gap: 13px;
   min-width: 0;
   color: var(--text);
   font-weight: 800;
@@ -159,12 +160,15 @@ input {
 
 .brand-mark::before,
 .brand::before {
-  content: "";
-  width: 3px;
-  height: 28px;
-  margin-right: 13px;
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  box-shadow: 0 0 20px rgba(255, 108, 20, 0.45);
+  content: none;
+}
+
+.site-logo {
+  display: block;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .brand-kicker {

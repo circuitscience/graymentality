@@ -449,7 +449,16 @@ $default_wake = $latest['wake_time'] ?? '';
       gap:12px;margin-bottom:16px;
     }
     .title{
-      display:flex;flex-direction:column;gap:2px;
+      display:grid;
+      grid-template-columns:auto minmax(0, 1fr);
+      gap:2px 12px;
+      align-items:center;
+    }
+    .title-logo{
+      grid-row:1 / span 2;
+      width:42px;
+      height:42px;
+      object-fit:contain;
     }
     .title h1{margin:0;font-size:20px;letter-spacing:.4px}
     .title p{margin:0;color:var(--muted2);font-size:13px}
@@ -471,6 +480,7 @@ $default_wake = $latest['wake_time'] ?? '';
     }
     @media (max-width: 980px){
       .grid{grid-template-columns: 1fr}
+      .topbar{align-items:flex-start;flex-direction:column}
     }
     .card{
       border:1px solid var(--stroke);
@@ -551,6 +561,7 @@ $default_wake = $latest['wake_time'] ?? '';
 
     <div class="topbar">
       <div class="title">
+        <img class="title-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
         <h1>Sleep Dashboard</h1>
         <p>Track recovery, consistency, and behaviors that affect sleep quality.</p>
       </div>

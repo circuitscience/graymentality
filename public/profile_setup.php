@@ -91,6 +91,19 @@ if ($timezone !== '' && !isset($timezoneOptions[$timezone])) {
             text-transform: uppercase;
         }
 
+        .profile-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .profile-title-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+
         .lead {
             margin: 18px 0 28px;
             color: #b7b1aa;
@@ -192,7 +205,10 @@ if ($timezone !== '' && !isset($timezoneOptions[$timezone])) {
 <body>
     <main class="profile-shell">
         <p class="kicker">Profile setup</p>
-        <h1>Before the portal</h1>
+        <div class="profile-title">
+            <img class="profile-title-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
+            <h1>Before the portal</h1>
+        </div>
         <p class="lead">
             Set the basic profile details the platform needs before opening the dashboard.
         </p>

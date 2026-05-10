@@ -11,6 +11,7 @@ if (!in_array($reason, ['logged_out', 'timeout', 'auth_required'], true)) {
 $redirect = auth_login_url([
     'reason' => $reason,
     'message' => auth_login_message_for_reason($reason),
+    'next' => auth_safe_next_path(isset($_REQUEST['next']) ? (string)$_REQUEST['next'] : null, '/modules/index.php'),
 ]);
 
 logout_user();

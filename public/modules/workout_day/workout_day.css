@@ -59,6 +59,20 @@ html {
     padding: clamp(26px, 5vw, 48px);
 }
 
+.module-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.module-title-logo {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
 .eyebrow,
 .phase-label {
     color: var(--workout-orange);
@@ -76,7 +90,7 @@ p {
 
 h1 {
     max-width: 760px;
-    margin-bottom: 16px;
+    margin-bottom: 0;
     font-size: clamp(2.8rem, 9vw, 6.8rem);
     line-height: 0.9;
     letter-spacing: 0;

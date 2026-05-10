@@ -331,6 +331,8 @@ if ($stmt = $conn->prepare("
             font-size: 0.75rem;
             letter-spacing: 0.08em;
             color: var(--accent-orange);
+            object-fit: contain;
+            flex: 0 0 auto;
         }
         .brand-text h1 { margin:0; font-size: 1.2rem; }
         .brand-text p  { margin:0.15rem 0 0; font-size:0.78rem; opacity:0.8; }
@@ -339,6 +341,8 @@ if ($stmt = $conn->prepare("
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--accent-orange);
+            object-fit: contain;
+            flex: 0 0 auto;
         }
         .brand-text p {
             font-size: 0.8rem;
@@ -507,7 +511,7 @@ if ($stmt = $conn->prepare("
 
                     <header class="lab-header">
                         <div class="brand">
-                            <div class="brand-logo">exFIT</div>
+                            <img class="brand-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
                             <div class="brand-text">
                                 <h1>Creatine · Consistency Tracker</h1>
                                 <p>Daily grams → adherence score → honest trends.</p>

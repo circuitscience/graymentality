@@ -48,7 +48,10 @@ if (is_file($workoutCssPath)) {
 
     <header class="module-header">
         <p class="eyebrow">Training Execution</p>
-        <h1>Workout Day Protocol</h1>
+        <div class="module-title">
+            <img class="module-title-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
+            <h1>Workout Day Protocol</h1>
+        </div>
         <p>Controlled stress. Honest execution. Deliberate recovery.</p>
     </header>
 

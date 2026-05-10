@@ -74,9 +74,12 @@ require_once __DIR__ . '/../../includes/session_guard.php';
 <body class="bg-gray-900 text-gray-100 min-h-screen view-tabs">
   <!-- HEADER -->
   <header class="p-6 text-center border-b border-gray-800 bg-gray-950/80">
-    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">
-      <span class="text-orange-400">exFIT</span>
-      <span class="text-purple-400"> Learning &amp; Tracker Hub</span>
+    <h1 class="inline-flex items-center justify-center gap-3 text-3xl md:text-4xl font-extrabold tracking-tight">
+      <img class="w-12 h-12 object-contain shrink-0" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
+      <span>
+        <span class="text-orange-400">exFIT</span>
+        <span class="text-purple-400"> Learning &amp; Tracker Hub</span>
+      </span>
     </h1>
     <p class="mt-2 text-sm text-gray-300">
       All your FYIs &amp; trackers in one place. Switch between Tabs or Accordion view.

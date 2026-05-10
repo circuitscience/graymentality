@@ -1,3 +1,7 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../../../bootstrap.php';
+?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -16,10 +20,7 @@
     <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-20">
       <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <!-- exFIT Logo stub -->
-          <div class="h-9 w-9 rounded-full border border-purple-400/60 flex items-center justify-center">
-            <span class="text-xs font-semibold tracking-widest text-orange-400">ex</span>
-          </div>
+          <img class="h-9 w-9 object-contain shrink-0" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
           <div>
             <h1 class="text-lg font-semibold tracking-tight">
               <span class="text-orange-400">exFIT</span> Weight Management

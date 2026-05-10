@@ -253,6 +253,53 @@ function auth_login_url(array $params = []): string
     return '/login.php' . ($query !== '' ? '?' . $query : '');
 }
 
+function auth_current_request_path(): string
+{
+    $uri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+    $path = parse_url($uri, PHP_URL_PATH);
+    $query = parse_url($uri, PHP_URL_QUERY);
+
+    $path = is_string($path) && $path !== '' ? '/' . ltrim($path, '/') : '/';
+    if (is_string($query) && $query !== '') {
+        $path .= '?' . $query;
+    }
+
+    return $path;
+}
+
+function auth_safe_next_path(?string $value, string $fallback = '/modules/index.php'): string
+{
+    $next = trim((string)$value);
+    if ($next === '') {
+        return $fallback;
+    }
+
+    $parts = parse_url($next);
+    if ($parts === false || isset($parts['scheme']) || isset($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
+        return $fallback;
+    }
+
+    $path = (string)($parts['path'] ?? '');
+    if ($path === '' || $path[0] !== '/' || str_starts_with($path, '//')) {
+        return $fallback;
+    }
+
+    $segments = explode('/', rawurldecode($path));
+    if (in_array('..', $segments, true) || str_contains($path, '\\')) {
+        return $fallback;
+    }
+
+    if (in_array($path, ['/login.php', '/login', '/logout.php', '/logout'], true)) {
+        return $fallback;
+    }
+
+    if (isset($parts['query']) && $parts['query'] !== '') {
+        $path .= '?' . $parts['query'];
+    }
+
+    return $path;
+}
+
 function auth_profile_setup_url(): string
 {
     return '/profile-setup';
@@ -278,6 +325,7 @@ function auth_redirect_to_login(string $reason = 'auth_required'): never
     header('Location: ' . auth_login_url([
         'reason' => $reason,
         'message' => auth_login_message_for_reason($reason),
+        'next' => auth_current_request_path(),
     ]));
     exit;
 }
@@ -302,15 +350,20 @@ function auth_asset_url(string $filename): string
 
 function auth_timeout_modal_head_markup(): string
 {
+    $next = auth_current_request_path();
     $config = [
         'idleTimeoutSeconds' => auth_idle_timeout_seconds(),
         'warningSeconds' => auth_warning_timeout_seconds(),
         'keepaliveSeconds' => auth_session_keepalive_seconds(),
-        'keepaliveUrl' => '/session_ping.php',
-        'logoutUrl' => '/logout.php?reason=timeout',
+        'keepaliveUrl' => '/session_ping.php?' . http_build_query(['next' => $next]),
+        'logoutUrl' => '/logout.php?' . http_build_query([
+            'reason' => 'timeout',
+            'next' => $next,
+        ]),
         'loginUrl' => auth_login_url([
             'reason' => 'timeout',
             'message' => auth_timeout_message(),
+            'next' => $next,
         ]),
         'message' => auth_timeout_message(),
     ];

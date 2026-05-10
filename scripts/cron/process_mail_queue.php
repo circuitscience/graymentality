@@ -238,21 +238,21 @@ foreach ($messages as $message) {
         $sent++;
     } catch (Throwable $e) {
         $isFinalFailure = $nextAttempts >= 3;
+        $status = $isFinalFailure ? 'failed' : 'pending';
+        $availableAtSql = $isFinalFailure ? 'NOW()' : 'DATE_ADD(NOW(), INTERVAL 15 MINUTE)';
+
         $update = $db->prepare(
             "UPDATE mail_queue
              SET status = ?,
                  attempts = ?,
                  last_attempt_at = NOW(),
-                 available_at = ?,
+                 available_at = {$availableAtSql},
                  last_error = ?
              WHERE id = ?"
         );
-        $status = $isFinalFailure ? 'failed' : 'pending';
-        $availableAt = $isFinalFailure ? date('Y-m-d H:i:s') : date('Y-m-d H:i:s', strtotime('+15 minutes'));
         $update->execute([
             $status,
             $nextAttempts,
-            $availableAt,
             substr($e->getMessage(), 0, 1000),
             (int)$message['id'],
         ]);

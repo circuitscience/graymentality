@@ -465,12 +465,16 @@ body::before {
             font-size: 0.75rem;
             letter-spacing: 0.08em;
             color: var(--accent-orange);
+            object-fit: contain;
+            flex: 0 0 auto;
         }
         .brand-text h1 {
             font-size: 1.15rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--accent-orange);
+            object-fit: contain;
+            flex: 0 0 auto;
         }
         .brand-text p {
             font-size: 0.8rem;
@@ -870,7 +874,7 @@ body::before {
                 <div class="page-wrap">
     <header>
         <div class="brand">
-            <div class="brand-logo">exFIT</div>
+            <img class="brand-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
             <div class="brand-text">
                 <h1>Frame Potential Lab</h1>
                 <p>Estimate your natural canvas before you start painting muscle on it.</p>

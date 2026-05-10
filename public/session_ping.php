@@ -8,6 +8,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 
 if (auth_session_has_timed_out()) {
+    $next = auth_safe_next_path(isset($_REQUEST['next']) ? (string)$_REQUEST['next'] : null, (string)($_SERVER['HTTP_REFERER'] ?? '/modules/index.php'));
     logout_user();
     http_response_code(401);
     header('Content-Type: application/json; charset=utf-8');
@@ -17,6 +18,7 @@ if (auth_session_has_timed_out()) {
         'redirect' => auth_login_url([
             'reason' => 'timeout',
             'message' => auth_timeout_message(),
+            'next' => $next,
         ]),
     ]);
     exit;
@@ -24,6 +26,7 @@ if (auth_session_has_timed_out()) {
 
 $user = check_auth();
 if (!$user) {
+    $next = auth_safe_next_path(isset($_REQUEST['next']) ? (string)$_REQUEST['next'] : null, (string)($_SERVER['HTTP_REFERER'] ?? '/modules/index.php'));
     http_response_code(401);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
@@ -32,6 +35,7 @@ if (!$user) {
         'redirect' => auth_login_url([
             'reason' => 'auth_required',
             'message' => auth_login_message_for_reason('auth_required'),
+            'next' => $next,
         ]),
     ]);
     exit;

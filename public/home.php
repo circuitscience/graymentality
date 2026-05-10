@@ -84,6 +84,7 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
   <div class="page-shell">
     <header class="site-header">
       <a class="brand-mark" href="<?= gm_public_url('/') ?>" aria-label="Gray Mentality home">
+        <img class="site-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
         <span>Gray Mentality</span>
       </a>
       <nav class="header-actions" aria-label="Primary">

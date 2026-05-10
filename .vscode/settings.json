@@ -5,13 +5,19 @@
     "**/.git": true,
     "**/.DS_Store": true,
     "**/vendor": true,
-    "**/public/modules/assets": true
+    "**/public/modules/assets/*.png": true,
+    "**/public/modules/assets/*.jpg": true,
+    "**/public/modules/assets/*.jpeg": true,
+    "**/public/modules/assets/*.webp": true
 
   },
   "search.exclude": {
     "**/.git": true,
     "**/vendor": true,
-    "**/public/modules/assets": true
+    "**/public/modules/assets/*.png": true,
+    "**/public/modules/assets/*.jpg": true,
+    "**/public/modules/assets/*.jpeg": true,
+    "**/public/modules/assets/*.webp": true
   },
 
   "files.watcherExclude": {

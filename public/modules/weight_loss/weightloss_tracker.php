@@ -367,13 +367,12 @@ $stmt->close();
             text-transform: uppercase;
             color: #ff7b1a;
         }
-        header span.logo-circle {
-            width: 24px;
-            height: 24px;
-            border-radius: 999px;
-            border: 2px solid #b46fff;
-            box-shadow: 0 0 8px rgba(180,111,255,0.8);
-            margin-right: 8px;
+        header .title-logo {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+            flex: 0 0 auto;
+            margin-right: 10px;
         }
         main {
             padding: 16px;
@@ -546,7 +545,7 @@ $stmt->close();
 <body>
 <header>
     <div style="display:flex;align-items:center;">
-        <span class="logo-circle"></span>
+        <img class="title-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
         <h1>exFIT • Weightloss Tracker</h1>
     </div>
     <div class="pill orange">
