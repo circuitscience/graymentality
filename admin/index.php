@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../auth_functions.php';
+require_once __DIR__ . '/../public/auth_functions.php';
 
 $authUser = require_auth();
 if ((int)($authUser['role_id'] ?? 0) !== 10) {

@@ -65,6 +65,52 @@ function gm_front_controller_resolve_php(string $requestPath): ?string
     return null;
 }
 
+function gm_front_controller_resolve_admin(string $requestPath): ?string
+{
+    if ($requestPath === '/admin') {
+        $requestPath = '/admin/index.php';
+    }
+
+    if (!str_starts_with($requestPath, '/admin/')) {
+        return null;
+    }
+
+    $relativePath = ltrim(substr($requestPath, strlen('/admin/')), '/');
+    if ($relativePath === '') {
+        $relativePath = 'index.php';
+    }
+
+    $parts = [];
+    foreach (explode('/', $relativePath) as $part) {
+        if ($part === '' || $part === '.') {
+            continue;
+        }
+
+        $decodedPart = rawurldecode($part);
+        if ($decodedPart === '..' || str_contains($decodedPart, '/') || str_contains($decodedPart, '\\')) {
+            return null;
+        }
+
+        $parts[] = $decodedPart;
+    }
+
+    $target = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
+    $adminRoot = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'admin');
+    $targetPath = realpath($target);
+
+    if (
+        is_string($adminRoot)
+        && is_string($targetPath)
+        && str_starts_with($targetPath, $adminRoot . DIRECTORY_SEPARATOR)
+        && is_file($targetPath)
+        && strtolower(pathinfo($targetPath, PATHINFO_EXTENSION)) === 'php'
+    ) {
+        return $targetPath;
+    }
+
+    return null;
+}
+
 function gm_front_controller_route_target(string $requestPath): ?array
 {
     $publicRoutes = [
@@ -110,11 +156,17 @@ function gm_front_controller_route_target(string $requestPath): ?array
         ];
     }
 
-    if ($requestPath === '/public/admin' || str_starts_with($requestPath, '/public/admin/')) {
-        $requestPath = '/admin' . substr($requestPath, strlen('/public/admin'));
+    if ($requestPath === '/admin' || str_starts_with($requestPath, '/admin/') || str_starts_with($requestPath, '/admin.php')) {
+        $target = gm_front_controller_resolve_admin($requestPath);
+        if ($target !== null) {
+            return [
+                'target' => $target,
+                'auth' => true,
+            ];
+        }
     }
 
-    foreach (['/modules', '/user_dashboard', '/change_password', '/admin'] as $protectedPrefix) {
+    foreach (['/modules', '/user_dashboard', '/change_password'] as $protectedPrefix) {
         if ($requestPath === $protectedPrefix || str_starts_with($requestPath, $protectedPrefix . '/') || str_starts_with($requestPath, $protectedPrefix . '.php')) {
             $target = gm_front_controller_resolve_php($requestPath);
             if ($target !== null) {

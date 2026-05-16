@@ -1283,7 +1283,7 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                         <span><?= gm_dashboard_h($displayName) ?></span>
                         <span><?= gm_dashboard_h((string)($user['email'] ?? '')) ?></span>
                         <?php if ($isAdmin): ?>
-                            <a class="admin-dashboard-link" href="/public/admin/index.php">Admin</a>
+                            <a class="admin-dashboard-link" href="/admin/index.php">Admin</a>
                         <?php endif; ?>
                     </div>
                     <div class="stat">
