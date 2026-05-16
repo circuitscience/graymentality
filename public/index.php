@@ -110,7 +110,11 @@ function gm_front_controller_route_target(string $requestPath): ?array
         ];
     }
 
-    foreach (['/modules', '/user_dashboard', '/change_password'] as $protectedPrefix) {
+    if ($requestPath === '/public/admin' || str_starts_with($requestPath, '/public/admin/')) {
+        $requestPath = '/admin' . substr($requestPath, strlen('/public/admin'));
+    }
+
+    foreach (['/modules', '/user_dashboard', '/change_password', '/admin'] as $protectedPrefix) {
         if ($requestPath === $protectedPrefix || str_starts_with($requestPath, $protectedPrefix . '/') || str_starts_with($requestPath, $protectedPrefix . '.php')) {
             $target = gm_front_controller_resolve_php($requestPath);
             if ($target !== null) {

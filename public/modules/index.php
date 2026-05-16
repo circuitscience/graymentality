@@ -18,7 +18,7 @@ function gm_dashboard_h(string $value): string
 function gm_dashboard_user(PDO $db, int $userId): array
 {
     $stmt = $db->prepare(
-        "SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.last_login, u.logins,
+        "SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.role_id, u.last_login, u.logins,
                 COALESCE(r.name, 'user') AS role_name,
                 p.date_of_birth, p.gender, p.timezone
          FROM users u
@@ -163,6 +163,70 @@ function gm_dashboard_xfit_user_number(PDO $db, ?string $email): array
     }
 
     return gm_dashboard_xfit_user_number_from_db($db, $xfitDb, $email);
+}
+
+function gm_dashboard_ensure_message_tables(PDO $db): void
+{
+    $db->exec(
+        "CREATE TABLE IF NOT EXISTS user_messages (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            admin_id INT NULL,
+            subject VARCHAR(180) NOT NULL DEFAULT 'Message',
+            body TEXT NOT NULL,
+            is_read TINYINT(1) NOT NULL DEFAULT 0,
+            read_at DATETIME NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_user_unread (user_id, is_read, created_at),
+            CONSTRAINT fk_user_messages_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_user_messages_admin
+                FOREIGN KEY (admin_id) REFERENCES users(id)
+                ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    $db->exec(
+        "CREATE TABLE IF NOT EXISTS admin_messages (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            admin_id INT NULL,
+            user_message_id INT NULL,
+            subject VARCHAR(180) NOT NULL DEFAULT 'User response',
+            body TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_admin_messages_created (created_at),
+            KEY idx_admin_messages_user (user_id, created_at),
+            CONSTRAINT fk_admin_messages_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_admin_messages_admin
+                FOREIGN KEY (admin_id) REFERENCES users(id)
+                ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+}
+
+function gm_dashboard_unread_message(PDO $db, int $userId): ?array
+{
+    try {
+        gm_dashboard_ensure_message_tables($db);
+        $stmt = $db->prepare(
+            "SELECT id, subject, body, created_at
+             FROM user_messages
+             WHERE user_id = ? AND is_read = 0
+             ORDER BY created_at ASC
+             LIMIT 1"
+        );
+        $stmt->execute([$userId]);
+        $message = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($message) ? $message : null;
+    } catch (Throwable $e) {
+        error_log('[dashboard.messages] ' . $e->getMessage());
+        return null;
+    }
 }
 
 function gm_dashboard_age(?string $dateOfBirth): ?int
@@ -329,7 +393,9 @@ if ($firstName === '') {
     $firstName = (string)($user['username'] ?? 'there');
 }
 
+$isAdmin = (int)($user['role_id'] ?? $authUser['role_id'] ?? 0) === 10;
 $xfitUserNumber = gm_dashboard_xfit_user_number($db, isset($user['email']) ? (string)$user['email'] : null);
+$dashboardMessage = gm_dashboard_unread_message($db, (int)$authUser['id']);
 $age = gm_dashboard_age(isset($user['date_of_birth']) ? (string)$user['date_of_birth'] : null);
 $profileBits = array_filter([
     $age !== null ? $age . ' years' : '',
@@ -695,6 +761,88 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
 
         .stat-value-unavailable {
             color: var(--dash-soft) !important;
+        }
+
+        .admin-dashboard-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 34px;
+            margin-top: 10px;
+            border: 1px solid rgba(155, 92, 255, 0.58);
+            background: rgba(155, 92, 255, 0.10);
+            color: var(--dash-text);
+            font-size: 0.72rem;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .admin-dashboard-link:hover {
+            border-color: var(--dash-purple);
+            background: rgba(155, 92, 255, 0.18);
+        }
+
+        .message-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: none;
+            place-items: center;
+            padding: 18px;
+        }
+
+        .message-modal.is-open {
+            display: grid;
+        }
+
+        .message-modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(10px);
+        }
+
+        .message-dialog {
+            position: relative;
+            z-index: 1;
+            width: min(560px, 100%);
+            border: 1px solid rgba(155, 92, 255, 0.52);
+            background: #0d0e13;
+            padding: clamp(20px, 4vw, 32px);
+            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.5);
+        }
+
+        .message-dialog h2 {
+            margin: 0 0 12px;
+            font-size: clamp(1.55rem, 4vw, 2.4rem);
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .message-dialog p {
+            color: var(--dash-muted);
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .message-reply {
+            width: 100%;
+            min-height: 110px;
+            margin-top: 16px;
+            padding: 12px;
+            border: 1px solid var(--dash-line);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--dash-text);
+            resize: vertical;
+        }
+
+        .message-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
         }
 
         .section {
@@ -1134,6 +1282,9 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                         <strong>Member</strong>
                         <span><?= gm_dashboard_h($displayName) ?></span>
                         <span><?= gm_dashboard_h((string)($user['email'] ?? '')) ?></span>
+                        <?php if ($isAdmin): ?>
+                            <a class="admin-dashboard-link" href="/public/admin/index.php">Admin</a>
+                        <?php endif; ?>
                     </div>
                     <div class="stat">
                         <strong>Exfit User Number</strong>
@@ -1289,5 +1440,60 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
             <span><?= gm_dashboard_h($currentDate) ?></span>
         </footer>
     </div>
+
+    <?php if ($dashboardMessage): ?>
+        <section class="message-modal is-open" id="dashboardMessageModal" aria-modal="true" role="dialog" aria-labelledby="dashboardMessageTitle">
+            <div class="message-modal-backdrop"></div>
+            <div class="message-dialog">
+                <p class="eyebrow">Admin Message</p>
+                <h2 id="dashboardMessageTitle"><?= gm_dashboard_h((string)$dashboardMessage['subject']) ?></h2>
+                <p><?= gm_dashboard_h((string)$dashboardMessage['body']) ?></p>
+                <textarea class="message-reply" id="dashboardMessageReply" placeholder="Optional response"></textarea>
+                <div class="message-actions">
+                    <button class="button button-primary" type="button" data-message-reply>Reply + Close</button>
+                    <button class="button" type="button" data-message-dismiss>Close</button>
+                </div>
+            </div>
+        </section>
+        <script>
+            (() => {
+                const modal = document.getElementById('dashboardMessageModal');
+                const reply = document.getElementById('dashboardMessageReply');
+                const messageId = <?= (int)$dashboardMessage['id'] ?>;
+
+                async function sendMessageAction(action) {
+                    const form = new FormData();
+                    form.append('message_id', String(messageId));
+                    form.append('action', action);
+                    if (action === 'reply') {
+                        form.append('body', reply ? reply.value : '');
+                    }
+
+                    const response = await fetch('/modules/messages.php', {
+                        method: 'POST',
+                        body: form,
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    if (modal) {
+                        modal.classList.remove('is-open');
+                    }
+                }
+
+                document.querySelector('[data-message-dismiss]')?.addEventListener('click', () => {
+                    sendMessageAction('dismiss').catch(() => {});
+                });
+
+                document.querySelector('[data-message-reply]')?.addEventListener('click', () => {
+                    const body = reply ? reply.value.trim() : '';
+                    sendMessageAction(body === '' ? 'dismiss' : 'reply').catch(() => {});
+                });
+            })();
+        </script>
+    <?php endif; ?>
 </body>
 </html>
