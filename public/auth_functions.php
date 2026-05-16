@@ -115,6 +115,29 @@ function auth_ensure_policy_columns(PDO $db): void
     }
 }
 
+function auth_ensure_login_counter_column(PDO $db): void
+{
+    static $checked = false;
+
+    if ($checked) {
+        return;
+    }
+
+    $checked = true;
+    $stmt = $db->prepare(
+        "SELECT COUNT(*)
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'users'
+           AND COLUMN_NAME = 'logins'"
+    );
+    $stmt->execute();
+
+    if ((int)$stmt->fetchColumn() === 0) {
+        $db->exec("ALTER TABLE users ADD COLUMN logins INT UNSIGNED NOT NULL DEFAULT 0 AFTER last_login");
+    }
+}
+
 function auth_ensure_profile_table(PDO $db): void
 {
     static $checked = false;
@@ -568,6 +591,7 @@ function queue_mail_message(string $recipientEmail, string $subject, string $bod
 function login_user(string $email, string $password, string $captcha_answer = ''): array
 {
     $db = get_db_connection();
+    auth_ensure_login_counter_column($db);
     $email = normalize_email($email);
 
     if ($email === '' || $password === '') {
@@ -633,7 +657,7 @@ function login_user(string $email, string $password, string $captcha_answer = ''
     ];
     auth_mark_activity();
 
-    $stmt = $db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+    $stmt = $db->prepare("UPDATE users SET last_login = NOW(), logins = logins + 1 WHERE id = ?");
     $stmt->execute([(int)$user['id']]);
 
     return ['success' => true, 'message' => 'Login successful.'];

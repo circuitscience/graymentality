@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Protein Intake (exFIT)
  * ------------------------------------------------------------------------
- * FILE: /public/modules/protein_intake/index.php
+ * FILE: /modules/protein_intake/index.php
  *
  * PURPOSE
  *  - Educational module: “Are you really getting enough protein?”

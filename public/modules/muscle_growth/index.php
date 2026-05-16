@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Muscle Growth Signals + Daily Check-In (exFIT)
  * ------------------------------------------------------------------------
- * FILE: /public/modules/muscle_growth/index.php
+ * FILE: /modules/muscle_growth/index.php
  *
  * PURPOSE
  *  - Educational module: “How do you know your muscles are growing?”

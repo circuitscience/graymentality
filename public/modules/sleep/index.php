@@ -5,7 +5,7 @@ declare(strict_types=1);
  * -------------------------------------------------------------------------
  * exFIT — Sleep Dashboard (Module)
  * -------------------------------------------------------------------------
- * FILE: /public/modules/sleep_dashboard/index.php
+ * FILE: /modules/sleep/index.php
  *
  * PURPOSE
  *  - Mobile/desktop friendly sleep dashboard that:

@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Sleep & Recovery Check-In (exFIT)
  * ------------------------------------------------------------------------
- * FILE:  /public/modules/sleep_recovery/index.php
+ * FILE:  /modules/sleep_recovery/index.php
  *
  * PURPOSE
  *  - Daily “readiness” snapshot:

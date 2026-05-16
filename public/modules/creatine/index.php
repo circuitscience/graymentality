@@ -5,7 +5,7 @@ declare(strict_types=1);
  * exFIT • Creatine Tracker + Adherence Scoring + Logging (Standalone)
  * =============================================================================
  * FILE
- *   /public/modules/creatine/index.php  (or any standalone location)
+ *   /modules/creatine/index.php
  *
  * PURPOSE
  *   Standalone creatine intake tracker that:

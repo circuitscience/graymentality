@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Hydration Tracker (exFIT)
  * ------------------------------------------------------------------------
- * FILE: /public/modules/hydration/index.php
+ * FILE: /modules/hydration/index.php
  *
  * PURPOSE
  *  - Track daily fluid intake (liters), urine color (1–5), thirst level (1–5), notes.

@@ -5,7 +5,7 @@ declare(strict_types=1);
  * BMR (RMR) + Maintenance & Goal-Intake Planner (exFIT) + Logging
  * =============================================================================
  * FILE
- *   /public/modules/bmr/index.php
+ *   /modules/bmr/index.php
  *
  * WHAT THIS MODULE DOES
  *   This page is a “baseline calories” tool + logger:

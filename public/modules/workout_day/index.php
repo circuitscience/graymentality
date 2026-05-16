@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * -------------------------------------------------------------------------
  * MODULE: Workout Day Protocol
- * FILE: /public/modules/workout_day/index.php
+ * FILE: /modules/workout_day/index.php
  * -------------------------------------------------------------------------
  * PURPOSE
  *  - Guides user through the full xFit workout day lifecycle

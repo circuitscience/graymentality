@@ -5,7 +5,7 @@
 /**
  * Weight Trajectory Lab (exFIT)
  * ------------------------------------------------------------------------
- * FILE:  /public/modules/weight_loss/index.php
+ * FILE:  /modules/weight_loss/index.php
  *
  * PURPOSE
  *  - Compare TWO long-term weight scenarios side-by-side (Scenario A vs B).

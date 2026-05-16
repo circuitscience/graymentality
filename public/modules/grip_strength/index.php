@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Grip Strength Lab (exFIT)
  * ------------------------------------------------------------------------
- * FILE:  /public/modules/grip_strength/index.php
+ * FILE:  /modules/grip_strength/index.php
  *
  * PURPOSE
  *  - Provide a simple grip-strength tracker + mini-plan generator.

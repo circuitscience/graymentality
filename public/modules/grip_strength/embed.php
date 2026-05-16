@@ -1,5 +1,5 @@
 <?php
-// public/modules/grip_strength/embed.php
+// /modules/grip_strength/embed.php
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../../config/config.php';

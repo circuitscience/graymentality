@@ -42,6 +42,7 @@ CREATE TABLE `users` (
   `policy_ip_address` varchar(45) DEFAULT NULL,
   `policy_user_agent` varchar(255) DEFAULT NULL,
   `last_login` timestamp NULL DEFAULT NULL,
+  `logins` int(10) unsigned NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

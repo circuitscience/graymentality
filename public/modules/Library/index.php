@@ -52,16 +52,21 @@ function gm_library_articles(PDO $db, array $columns): array
 
     $hasId = in_array('id', $columns, true);
     $hasCategory = in_array('category', $columns, true);
+    $hasDate = in_array('date', $columns, true);
+    $hasCreatedAt = in_array('created_at', $columns, true);
+    $hasImage = in_array('image', $columns, true);
+    $hasImageUrl = in_array('image_url', $columns, true);
     $select = [
         $hasId ? 'id' : 'NULL AS id',
-        '`date`',
+        $hasDate ? '`date`' : ($hasCreatedAt ? 'created_at AS `date`' : 'NULL AS `date`'),
         'author',
         'title',
         '`text`',
-        'image',
+        $hasImageUrl ? 'image_url AS image' : ($hasImage ? 'image' : 'NULL AS image'),
         $hasCategory ? 'category' : "'General' AS category",
     ];
-    $order = $hasCategory ? 'category ASC, `date` DESC, title ASC' : '`date` DESC, title ASC';
+    $dateOrder = $hasDate ? '`date`' : ($hasCreatedAt ? 'created_at' : 'title');
+    $order = $hasCategory ? 'category ASC, ' . $dateOrder . ' DESC, title ASC' : $dateOrder . ' DESC, title ASC';
 
     try {
         $stmt = $db->query('SELECT ' . implode(', ', $select) . ' FROM general_articles ORDER BY ' . $order);
@@ -129,7 +134,7 @@ function gm_library_image(?string $value): string
     }
 
     if (preg_match('#^(https?://|/|data:)#i', $image)) {
-        return $image;
+        return gm_public_url($image);
     }
 
     $publicRoot = dirname(__DIR__, 2);

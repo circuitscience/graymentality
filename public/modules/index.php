@@ -18,7 +18,7 @@ function gm_dashboard_h(string $value): string
 function gm_dashboard_user(PDO $db, int $userId): array
 {
     $stmt = $db->prepare(
-        "SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.last_login,
+        "SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.last_login, u.logins,
                 COALESCE(r.name, 'user') AS role_name,
                 p.date_of_birth, p.gender, p.timezone
          FROM users u
@@ -63,8 +63,23 @@ function gm_dashboard_format_last_login(?string $value): string
 function gm_dashboard_featured_article(PDO $db): ?array
 {
     try {
+        $columnsStmt = $db->query("SHOW COLUMNS FROM general_articles");
+        $columns = $columnsStmt ? $columnsStmt->fetchAll(PDO::FETCH_COLUMN) : [];
+        $columns = array_map('strval', is_array($columns) ? $columns : []);
+
+        if ($columns === []) {
+            return null;
+        }
+
+        $dateColumn = in_array('date', $columns, true) ? '`date`' : (in_array('created_at', $columns, true) ? 'created_at' : 'NULL');
+        $imageColumn = in_array('image_url', $columns, true)
+            ? 'image_url'
+            : (in_array('image', $columns, true) ? 'image' : 'NULL');
+        $categoryColumn = in_array('category', $columns, true) ? 'category' : "'General'";
+        $idColumn = in_array('id', $columns, true) ? 'id' : 'NULL';
+
         $stmt = $db->query(
-            "SELECT `date`, author, title, `text`, image
+            "SELECT {$idColumn} AS id, {$dateColumn} AS `date`, author, title, `text`, {$imageColumn} AS image, {$categoryColumn} AS category
              FROM general_articles
              WHERE COALESCE(title, '') <> '' AND COALESCE(`text`, '') <> ''
              ORDER BY RAND()
@@ -139,7 +154,7 @@ function gm_dashboard_article_image(?string $value): string
     }
 
     if (preg_match('#^(https?://|/|data:)#i', $image)) {
-        return $image;
+        return gm_public_url($image);
     }
 
     $publicRoot = dirname(__DIR__);
@@ -160,6 +175,10 @@ function gm_dashboard_article_image(?string $value): string
 
 function gm_dashboard_article_ref(array $article): string
 {
+    if (isset($article['id']) && (string)$article['id'] !== '') {
+        return 'id-' . (string)$article['id'];
+    }
+
     return 'key-' . substr(hash('sha256', implode('|', [
         (string)($article['date'] ?? ''),
         (string)($article['author'] ?? ''),
@@ -296,6 +315,7 @@ $mentalityItems = [
 
 $currentDate = (new DateTimeImmutable('now', new DateTimeZone('America/Toronto')))->format('F j, Y');
 $lastLogin = gm_dashboard_format_last_login(isset($user['last_login']) ? (string)$user['last_login'] : null);
+$visitNumber = max(0, (int)($user['logins'] ?? 0));
 $featuredArticle = gm_dashboard_featured_article($db);
 $featuredArticleExcerpt = $featuredArticle ? gm_dashboard_article_excerpt(isset($featuredArticle['text']) ? (string)$featuredArticle['text'] : '') : '';
 $featuredArticleImage = $featuredArticle ? gm_dashboard_article_image(isset($featuredArticle['image']) ? (string)$featuredArticle['image'] : '') : '';
@@ -745,6 +765,54 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
             margin-top: 22px;
         }
 
+        .passage-invite {
+            position: relative;
+            display: grid;
+            gap: 18px;
+            margin-top: 24px;
+            padding: clamp(18px, 3vw, 28px);
+            border: 1px solid rgba(255, 106, 0, 0.46);
+            background:
+                linear-gradient(135deg, rgba(255, 106, 0, 0.12), transparent 42%),
+                linear-gradient(315deg, rgba(155, 92, 255, 0.10), transparent 48%),
+                rgba(255, 255, 255, 0.035);
+            overflow: hidden;
+        }
+
+        .passage-invite::after {
+            content: "";
+            position: absolute;
+            right: -34px;
+            bottom: -34px;
+            width: 116px;
+            height: 116px;
+            border: 1px solid rgba(155, 92, 255, 0.28);
+            transform: rotate(45deg);
+        }
+
+        .passage-invite h3 {
+            margin: 0;
+            max-width: 14ch;
+            font-size: clamp(1.55rem, 3vw, 2.8rem);
+            line-height: 0.96;
+            text-transform: uppercase;
+        }
+
+        .passage-invite p {
+            max-width: 520px;
+            margin: 0;
+            color: var(--dash-muted);
+            line-height: 1.55;
+        }
+
+        .passage-depths {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .mental-card {
             min-height: 0;
             padding: 18px;
@@ -848,7 +916,7 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                         <div class="hero-actions">
                             <a class="button button-primary" href="#labs">Open Labs</a>
                             <a class="button" href="#xfit">Enter xFit</a>
-                            <a class="button" href="#mentality">Mental Work</a>
+                            <a class="button" href="/modules/passages/index.php">Today&apos;s Passage</a>
                         </div>
                     </div>
                 </div>
@@ -865,6 +933,7 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                     <div class="stat">
                         <strong>Last login</strong>
                         <span><?= gm_dashboard_h($lastLogin) ?></span>
+                        <span></br>Login number <?= gm_dashboard_h((string)$visitNumber) ?></span>
                     </div>
                     <div class="stat">
                         <strong>Sections</strong>
@@ -965,9 +1034,21 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                     <p class="eyebrow">Mentality</p>
                     <h2>Mental Work</h2>
                     <p>
-                        This area is ready for the content library: tenets, essays, prompts, decision logs, recovery notes, and
-                        non-physical operating principles. For now, it defines the containers so your content can land cleanly.
+                        Tenets, prompts, essays, decision logs, and quieter operating principles live here beside the physical work.
                     </p>
+
+                    <article class="passage-invite">
+                        <span class="card-label">Today&apos;s Descent</span>
+                        <h3>5 Minutes Away From Automatic Thinking</h3>
+                        <p>
+                            Some days need a narrower doorway before the rest of the world gets loud again.
+                        </p>
+                        <div class="passage-depths">
+                            <a class="button button-primary" href="/modules/passages/index.php?depth=deep">Enter</a>
+                            <a class="button" href="/modules/passages/index.php?depth=short">Short</a>
+                            <a class="button" href="/modules/passages/index.php?depth=long">Long</a>
+                        </div>
+                    </article>
 
                     <div class="mental-grid">
                         <?php foreach ($mentalityItems as $item): ?>

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * =============================================================================
- * FILE: /public/modules/motivation/angry/index.php
+ * FILE: /modules/motivation/angry/index.php
  * =============================================================================
  * MODULE: exFIT Motivation • ANGRY MODE (State Engineering)
  *

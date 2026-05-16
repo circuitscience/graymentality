@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * =============================================================================
- * FILE: /public/modules/motivation/recovery/index.php
+ * FILE: /modules/motivation/recovery/index.php
  * =============================================================================
  * MODULE: exFIT Motivation • RECOVERY (Downshift Protocol)
  *
