@@ -33,6 +33,138 @@ function gm_dashboard_user(PDO $db, int $userId): array
     return is_array($row) ? $row : [];
 }
 
+function gm_dashboard_sql_identifier(string $value): string
+{
+    return '`' . str_replace('`', '``', $value) . '`';
+}
+
+function gm_dashboard_xfit_result(string $status, string $label): array
+{
+    return [
+        'status' => $status,
+        'label' => $label,
+    ];
+}
+
+function gm_dashboard_xfit_connection(): ?PDO
+{
+    $host = trim((string)auth_env('XFIT_DB_HOST', ''));
+    if ($host === '') {
+        return null;
+    }
+
+    $dbname = trim((string)auth_env('XFIT_DB_NAME', 'jerrybil_xfit'));
+    $user = trim((string)auth_env('XFIT_DB_USER', (string)auth_env('DB_USER', '')));
+    $pass = (string)auth_env('XFIT_DB_PASS', (string)auth_env('DB_PASS', ''));
+    $port = trim((string)auth_env('XFIT_DB_PORT', '3306'));
+    $charset = trim((string)auth_env('XFIT_DB_CHARSET', (string)auth_env('DB_CHARSET', 'utf8mb4')));
+
+    if ($dbname === '' || $user === '') {
+        return null;
+    }
+
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}";
+
+    try {
+        return new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
+    } catch (Throwable $e) {
+        error_log('[dashboard.xfit_db_connect] ' . $e->getMessage());
+        return null;
+    }
+}
+
+function gm_dashboard_xfit_user_number_from_db(PDO $db, string $xfitDb, string $email): array
+{
+    if ($xfitDb === '') {
+        return gm_dashboard_xfit_result('unavailable', 'xFit info unavailable');
+    }
+
+    try {
+        $tableStmt = $db->prepare(
+            "SELECT COUNT(*)
+             FROM INFORMATION_SCHEMA.TABLES
+             WHERE TABLE_SCHEMA = ?
+               AND TABLE_NAME = 'users'"
+        );
+        $tableStmt->execute([$xfitDb]);
+        if ((int)$tableStmt->fetchColumn() === 0) {
+            return gm_dashboard_xfit_result('unavailable', 'xFit info unavailable');
+        }
+
+        $columnStmt = $db->prepare(
+            "SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = ?
+               AND TABLE_NAME = 'users'"
+        );
+        $columnStmt->execute([$xfitDb]);
+        $columns = array_map('strval', $columnStmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        if ($columns === []) {
+            return gm_dashboard_xfit_result('unavailable', 'xFit info unavailable');
+        }
+
+        $emailColumn = null;
+        foreach (['email', 'user_email'] as $candidate) {
+            if (in_array($candidate, $columns, true)) {
+                $emailColumn = $candidate;
+                break;
+            }
+        }
+
+        $numberColumn = null;
+        foreach (['user_id', 'exfit_user_number', 'xfit_user_number', 'user_number', 'member_number', 'id'] as $candidate) {
+            if (in_array($candidate, $columns, true)) {
+                $numberColumn = $candidate;
+                break;
+            }
+        }
+
+        if ($emailColumn === null || $numberColumn === null) {
+            return gm_dashboard_xfit_result('unavailable', 'xFit info unavailable');
+        }
+
+        $dbName = gm_dashboard_sql_identifier($xfitDb);
+        $emailField = gm_dashboard_sql_identifier($emailColumn);
+        $numberField = gm_dashboard_sql_identifier($numberColumn);
+        $stmt = $db->prepare(
+            "SELECT {$numberField}
+             FROM {$dbName}.`users`
+             WHERE LOWER({$emailField}) = ?
+             LIMIT 1"
+        );
+        $stmt->execute([$email]);
+        $value = $stmt->fetchColumn();
+
+        $value = trim((string)($value !== false ? $value : ''));
+        return $value !== ''
+            ? gm_dashboard_xfit_result('member', $value)
+            : gm_dashboard_xfit_result('not_member', 'Not a Member');
+    } catch (Throwable $e) {
+        error_log('[dashboard.xfit_user_lookup] ' . $e->getMessage());
+        return gm_dashboard_xfit_result('unavailable', 'xFit info unavailable');
+    }
+}
+
+function gm_dashboard_xfit_user_number(PDO $db, ?string $email): array
+{
+    $email = strtolower(trim((string)$email));
+    if ($email === '') {
+        return gm_dashboard_xfit_result('not_member', 'Not a Member');
+    }
+
+    $xfitDb = trim((string)auth_env('XFIT_DB_NAME', 'jerrybil_xfit'));
+    $xfitConnection = gm_dashboard_xfit_connection();
+    if ($xfitConnection instanceof PDO) {
+        return gm_dashboard_xfit_user_number_from_db($xfitConnection, $xfitDb, $email);
+    }
+
+    return gm_dashboard_xfit_user_number_from_db($db, $xfitDb, $email);
+}
+
 function gm_dashboard_age(?string $dateOfBirth): ?int
 {
     if (!$dateOfBirth) {
@@ -197,6 +329,7 @@ if ($firstName === '') {
     $firstName = (string)($user['username'] ?? 'there');
 }
 
+$xfitUserNumber = gm_dashboard_xfit_user_number($db, isset($user['email']) ? (string)$user['email'] : null);
 $age = gm_dashboard_age(isset($user['date_of_birth']) ? (string)$user['date_of_birth'] : null);
 $profileBits = array_filter([
     $age !== null ? $age . ' years' : '',
@@ -440,6 +573,27 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
             color: #07080b;
         }
 
+        .passage-link-signal {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .passage-link-signal::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 1;
+            width: 6px;
+            height: 6px;
+            background: var(--dash-purple);
+            box-shadow:
+                0 0 10px rgba(155, 92, 255, 0.95),
+                0 0 20px rgba(155, 92, 255, 0.58);
+            transform: translate(-50%, -50%);
+            animation: passage-border-orbit 3s linear infinite;
+        }
+
         .hero {
             display: grid;
             grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.55fr);
@@ -537,6 +691,10 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
             color: var(--dash-muted);
             font-size: 0.92rem;
             line-height: 1.45;
+        }
+
+        .stat-value-unavailable {
+            color: var(--dash-soft) !important;
         }
 
         .section {
@@ -790,6 +948,22 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
             transform: rotate(45deg);
         }
 
+        .passage-invite::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 1;
+            width: 7px;
+            height: 7px;
+            background: var(--dash-purple);
+            box-shadow:
+                0 0 10px rgba(155, 92, 255, 0.95),
+                0 0 22px rgba(155, 92, 255, 0.62);
+            transform: translate(-50%, -50%);
+            animation: passage-border-orbit 3s linear infinite;
+        }
+
         .passage-invite h3 {
             margin: 0;
             max-width: 14ch;
@@ -811,6 +985,33 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+        }
+
+        @keyframes passage-border-orbit {
+            0% {
+                left: 0;
+                top: 0;
+            }
+
+            25% {
+                left: 100%;
+                top: 0;
+            }
+
+            50% {
+                left: 100%;
+                top: 100%;
+            }
+
+            75% {
+                left: 0;
+                top: 100%;
+            }
+
+            100% {
+                left: 0;
+                top: 0;
+            }
         }
 
         .mental-card {
@@ -881,6 +1082,13 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                 grid-template-columns: 1fr;
             }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .passage-invite::before,
+            .passage-link-signal::before {
+                animation: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -916,7 +1124,7 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                         <div class="hero-actions">
                             <a class="button button-primary" href="#labs">Open Labs</a>
                             <a class="button" href="#xfit">Enter xFit</a>
-                            <a class="button" href="/modules/passages/index.php">Today&apos;s Passage</a>
+                            <a class="button passage-link-signal" href="/modules/passages/index.php">Today&apos;s Passage</a>
                         </div>
                     </div>
                 </div>
@@ -925,6 +1133,13 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
                     <div class="stat">
                         <strong>Member</strong>
                         <span><?= gm_dashboard_h($displayName) ?></span>
+                        <span><?= gm_dashboard_h((string)($user['email'] ?? '')) ?></span>
+                    </div>
+                    <div class="stat">
+                        <strong>Exfit User Number</strong>
+                        <span class="<?= ($xfitUserNumber['status'] ?? '') === 'unavailable' ? 'stat-value-unavailable' : '' ?>">
+                            <?= gm_dashboard_h((string)($xfitUserNumber['label'] ?? 'xFit info unavailable')) ?>
+                        </span>
                     </div>
                     <div class="stat">
                         <strong>Profile</strong>
