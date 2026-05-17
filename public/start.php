@@ -301,10 +301,6 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
       </div>
       <form class="auth-form" action="<?= gm_public_url('/register.php') ?>" method="post">
         <div class="form-group">
-          <label for="register-username">Username</label>
-          <input type="text" id="register-username" name="username" required>
-        </div>
-        <div class="form-group">
           <label for="register-email">Email</label>
           <input type="email" id="register-email" name="email" required>
         </div>

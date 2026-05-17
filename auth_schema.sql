@@ -87,9 +87,26 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     INDEX idx_mail_queue_status_available (status, available_at)
 );
 
+CREATE TABLE IF NOT EXISTS email_confirmations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL,
+    token VARCHAR(128) NOT NULL UNIQUE,
+    mail_queue_id INT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email_confirmations_expires_at (expires_at),
+    CONSTRAINT fk_email_confirmations_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_email_confirmations_mail_queue
+        FOREIGN KEY (mail_queue_id) REFERENCES mail_queue(id)
+        ON DELETE SET NULL
+);
+
 -- Insert default roles
 INSERT INTO roles (id, name, description) VALUES
 (1, 'user', 'Regular user'),
 (10, 'admin', 'Administrator')
 ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description);
-

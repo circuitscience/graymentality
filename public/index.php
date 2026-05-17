@@ -127,6 +127,8 @@ function gm_front_controller_route_target(string $requestPath): ?array
         '/login.php' => 'login.php',
         '/register' => 'register.php',
         '/register.php' => 'register.php',
+        '/confirm_email' => 'confirm_email.php',
+        '/confirm_email.php' => 'confirm_email.php',
         '/profile-setup' => 'profile_setup.php',
         '/profile-setup.php' => 'profile_setup.php',
         '/reset_password' => 'reset_password.php',

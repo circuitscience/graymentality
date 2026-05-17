@@ -191,6 +191,11 @@ if (trim($smtpHost) === '') {
 }
 
 $db = get_db_connection();
+$expiredConfirmationMessages = cleanup_expired_email_confirmations($db);
+if ($expiredConfirmationMessages > 0) {
+    echo sprintf("Deleted %d expired pending confirmation message(s)\n", $expiredConfirmationMessages);
+}
+
 $stmt = $db->query(
     "SELECT id, recipient_email, subject, body_text, attempts
      FROM mail_queue

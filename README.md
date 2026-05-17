@@ -15,7 +15,7 @@ The public folder is now wired as a front controller:
 - `public/` - web document root
 - `public/index.php` - front controller
 - `public/home.php` - landing page view
-- `public/login.php`, `public/register.php`, `public/reset_password.php` - auth entry points
+- `public/login.php`, `public/register.php`, `public/confirm_email.php`, `public/reset_password.php` - auth entry points
 - `bootstrap.php` - env loading and optional DB connection
 - `config.php` - env-driven URL and copy settings
 - `data/modules.php` - example module content used on the page
@@ -49,20 +49,23 @@ Auth tables:
 
 - `users` is the main account table used by login and registration
 - `auth_sessions` stores active login sessions
+- `email_confirmations` stores registration confirmation tokens until they expire or are consumed
 - `password_resets` stores reset tokens until they expire or are consumed
 - `mail_queue` stores outbound emails until a cron runner sends them
 
 Auth routes:
 
+- `public/confirm_email.php` handles registration email confirmation links
 - `public/reset_password.php` handles anonymous reset-token requests and password changes
 - `public/change_password.php` handles logged-in password changes
 
-Password reset requests generate a token row in `password_resets`; in development the reset link is shown on the page, and production mail delivery can be wired in later with SMTP.
+Registration creates an unverified user, queues a 24-hour confirmation link, and blocks login until the link is consumed. Successful confirmation queues the welcome email. Password reset requests generate a token row in `password_resets`; in development the reset link is shown on the page.
 
 Outbound mail:
 
-- password reset requests are queued in `mail_queue`
+- registration confirmations, welcome emails, and password reset requests are queued in `mail_queue`
 - run `php scripts/cron/process_mail_queue.php` from cron to send queued mail; the sample crontab writes to `runtime/logs/cron/mail-runner.log`
+- the mail runner deletes expired pending registration confirmation emails after 24 hours
 - the Docker cron container runs the mail runner every 5 minutes
 - run `sh scripts/cron/run_backup_database.sh` from cron to create database backups in `runtime/backups/db`
 - the Docker cron container runs the backup job daily at `02:30` America/Toronto and logs to `runtime/logs/cron/db-backup/log`

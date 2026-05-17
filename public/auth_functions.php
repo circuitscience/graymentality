@@ -164,6 +164,36 @@ function auth_ensure_profile_table(PDO $db): void
     );
 }
 
+function auth_ensure_email_confirmations_table(PDO $db): void
+{
+    static $checked = false;
+
+    if ($checked) {
+        return;
+    }
+
+    $checked = true;
+    $db->exec(
+        "CREATE TABLE IF NOT EXISTS email_confirmations (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL UNIQUE,
+            email VARCHAR(100) NOT NULL,
+            token VARCHAR(128) NOT NULL UNIQUE,
+            mail_queue_id INT NULL,
+            expires_at DATETIME NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_email_confirmations_expires_at (expires_at),
+            CONSTRAINT fk_email_confirmations_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_email_confirmations_mail_queue
+                FOREIGN KEY (mail_queue_id) REFERENCES mail_queue(id)
+                ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+}
+
 function sanitize_input(string $input): string
 {
     return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
@@ -172,6 +202,32 @@ function sanitize_input(string $input): string
 function normalize_email(string $email): string
 {
     return strtolower(trim($email));
+}
+
+function auth_generate_username(PDO $db, string $email): string
+{
+    $localPart = (string)strstr($email, '@', true);
+    $base = strtolower((string)preg_replace('/[^a-zA-Z0-9_]+/', '_', $localPart));
+    $base = trim($base, '_');
+
+    if (strlen($base) < 3) {
+        $base = 'user';
+    }
+
+    $base = substr($base, 0, 40);
+    for ($attempt = 0; $attempt < 10; $attempt++) {
+        $candidate = $attempt === 0
+            ? $base
+            : substr($base, 0, 35) . '_' . random_int(1000, 9999);
+
+        $stmt = $db->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+        $stmt->execute([$candidate]);
+        if (!$stmt->fetch()) {
+            return $candidate;
+        }
+    }
+
+    return substr($base, 0, 29) . '_' . bin2hex(random_bytes(8));
 }
 
 function generate_session_token(): string
@@ -566,12 +622,17 @@ function auth_save_user_profile(int $userId, string $dateOfBirth, string $gender
 
 function queue_mail_message(string $recipientEmail, string $subject, string $bodyText): bool
 {
+    return queue_mail_message_id($recipientEmail, $subject, $bodyText) !== null;
+}
+
+function queue_mail_message_id(string $recipientEmail, string $subject, string $bodyText): ?int
+{
     $recipientEmail = normalize_email($recipientEmail);
     $subject = trim($subject);
     $bodyText = trim($bodyText);
 
     if ($recipientEmail === '' || $subject === '' || $bodyText === '') {
-        return false;
+        return null;
     }
 
     try {
@@ -581,10 +642,10 @@ function queue_mail_message(string $recipientEmail, string $subject, string $bod
              VALUES (?, ?, ?, 'pending', 0, NOW())"
         );
         $stmt->execute([$recipientEmail, $subject, $bodyText]);
-        return true;
+        return (int)$db->lastInsertId();
     } catch (Throwable $e) {
         error_log('[auth.mail_queue] ' . $e->getMessage());
-        return false;
+        return null;
     }
 }
 
@@ -613,6 +674,10 @@ function login_user(string $email, string $password, string $captcha_answer = ''
 
     if (!(bool)$user['is_active']) {
         return ['success' => false, 'message' => 'Account is deactivated.'];
+    }
+
+    if (!(bool)$user['email_verified']) {
+        return ['success' => false, 'message' => 'Please confirm your email address before logging in.'];
     }
 
     if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -674,64 +739,224 @@ function register_user(
 ): array {
     $db = get_db_connection();
     auth_ensure_policy_columns($db);
+    auth_ensure_email_confirmations_table($db);
     $username = trim($username);
     $email = normalize_email($email);
 
-    if ($username === '' || $email === '' || $password === '') {
-        return ['success' => false, 'message' => 'Username, email, and password are required.'];
+    if ($email === '' || $password === '') {
+        return ['success' => false, 'message' => 'Email and password are required.'];
     }
 
     if (!$policy_acknowledged) {
         return ['success' => false, 'message' => 'You must acknowledge the site policies and terms before registering.'];
     }
 
-    if (strlen($username) < 3 || strlen($password) < 8) {
-        return ['success' => false, 'message' => 'Username must be at least 3 characters, password at least 8.'];
+    if (strlen($password) < 8) {
+        return ['success' => false, 'message' => 'Password must be at least 8 characters.'];
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return ['success' => false, 'message' => 'Invalid email address.'];
     }
 
-    $stmt = $db->prepare("SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1");
-    $stmt->execute([$username, $email]);
-    if ($stmt->fetch()) {
-        return ['success' => false, 'message' => 'Username or email already exists.'];
+    if ($username === '') {
+        $username = auth_generate_username($db, $email);
+    } elseif (strlen($username) < 3) {
+        return ['success' => false, 'message' => 'Username must be at least 3 characters.'];
     }
 
-    $hash = hash_password($password);
-    $policyVersion = auth_policy_version();
-    $policyIpAddress = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
-    $policyUserAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
-    $stmt = $db->prepare(
-        "INSERT INTO users (
-            username,
-            email,
-            password_hash,
-            first_name,
-            last_name,
-            role_id,
-            is_active,
-            email_verified,
-            policy_acknowledged_at,
-            policy_version,
-            policy_ip_address,
-            policy_user_agent
-        )
-         VALUES (?, ?, ?, ?, ?, 1, TRUE, TRUE, NOW(), ?, ?, ?)"
-    );
-    $stmt->execute([
-        $username,
-        $email,
-        $hash,
-        trim($first_name),
-        trim($last_name),
-        $policyVersion,
-        $policyIpAddress,
-        $policyUserAgent,
+    $stmt = $db->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+    $stmt->execute([$email]);
+    if ($stmt->fetch()) {
+        return ['success' => false, 'message' => 'Email already exists.'];
+    }
+
+    $stmt = $db->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+    $stmt->execute([$username]);
+    if ($stmt->fetch()) {
+        return ['success' => false, 'message' => 'Username already exists.'];
+    }
+
+    try {
+        $db->beginTransaction();
+
+        $hash = hash_password($password);
+        $policyVersion = auth_policy_version();
+        $policyIpAddress = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
+        $policyUserAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+        $stmt = $db->prepare(
+            "INSERT INTO users (
+                username,
+                email,
+                password_hash,
+                first_name,
+                last_name,
+                role_id,
+                is_active,
+                email_verified,
+                policy_acknowledged_at,
+                policy_version,
+                policy_ip_address,
+                policy_user_agent
+            )
+             VALUES (?, ?, ?, ?, ?, 1, TRUE, FALSE, NOW(), ?, ?, ?)"
+        );
+        $stmt->execute([
+            $username,
+            $email,
+            $hash,
+            trim($first_name),
+            trim($last_name),
+            $policyVersion,
+            $policyIpAddress,
+            $policyUserAgent,
+        ]);
+
+        $userId = (int)$db->lastInsertId();
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+        $confirmUrl = auth_public_base_url() . '/confirm_email.php?token=' . urlencode($token);
+        $subject = 'Confirm your Gray Mentality email';
+        $bodyText = implode("\n", [
+            'Confirm your Gray Mentality account email address.',
+            '',
+            'Confirmation link: ' . $confirmUrl,
+            'This link expires in 24 hours.',
+            '',
+            'If you did not create this account, you can ignore this message.',
+        ]);
+        $mailQueueId = queue_mail_message_id($email, $subject, $bodyText);
+
+        if ($mailQueueId === null) {
+            throw new RuntimeException('Unable to queue confirmation email.');
+        }
+
+        $stmt = $db->prepare(
+            "INSERT INTO email_confirmations (user_id, email, token, mail_queue_id, expires_at)
+             VALUES (?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([$userId, $email, $token, $mailQueueId, $expiresAt]);
+
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        error_log('[auth.register.confirmation] ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Registration could not queue a confirmation email. Please try again.'];
+    }
+
+    $result = ['success' => true, 'message' => 'Registration successful. Check your email to confirm your account.'];
+    if (auth_is_debug_mode()) {
+        $result['confirm_url'] = $confirmUrl;
+    }
+
+    return $result;
+}
+
+function queue_welcome_email(array $user): bool
+{
+    $email = normalize_email((string)($user['email'] ?? ''));
+    $name = trim((string)($user['first_name'] ?? ''));
+    if ($name === '') {
+        $name = trim((string)($user['username'] ?? ''));
+    }
+
+    $greeting = $name !== '' ? 'Welcome, ' . $name . '.' : 'Welcome.';
+    $subject = 'Welcome to Gray Mentality';
+    $bodyText = implode("\n", [
+        $greeting,
+        '',
+        'Your email is confirmed and your Gray Mentality account is ready.',
+        '',
+        'Login: ' . auth_public_base_url() . '/login.php',
     ]);
 
-    return ['success' => true, 'message' => 'Registration successful. You can now log in.'];
+    return queue_mail_message($email, $subject, $bodyText);
+}
+
+function confirm_user_email(string $token): array
+{
+    $token = trim($token);
+    if ($token === '') {
+        return ['success' => false, 'message' => 'Invalid confirmation link.'];
+    }
+
+    $db = get_db_connection();
+    auth_ensure_email_confirmations_table($db);
+    cleanup_expired_email_confirmations($db);
+
+    $stmt = $db->prepare(
+        "SELECT ec.user_id, ec.email, ec.mail_queue_id, u.username, u.first_name, u.last_name, u.email_verified
+         FROM email_confirmations ec
+         JOIN users u ON u.id = ec.user_id
+         WHERE ec.token = ?
+           AND ec.expires_at > NOW()
+         LIMIT 1"
+    );
+    $stmt->execute([$token]);
+    $row = $stmt->fetch();
+
+    if (!$row) {
+        return ['success' => false, 'message' => 'Confirmation link is invalid or expired.'];
+    }
+
+    try {
+        $db->beginTransaction();
+
+        $stmt = $db->prepare("UPDATE users SET email_verified = TRUE WHERE id = ? LIMIT 1");
+        $stmt->execute([(int)$row['user_id']]);
+
+        if (!empty($row['mail_queue_id'])) {
+            $stmt = $db->prepare("DELETE FROM mail_queue WHERE id = ? AND status <> 'sent'");
+            $stmt->execute([(int)$row['mail_queue_id']]);
+        }
+
+        $stmt = $db->prepare("DELETE FROM email_confirmations WHERE user_id = ?");
+        $stmt->execute([(int)$row['user_id']]);
+
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        error_log('[auth.confirm_email] ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Unable to confirm this email right now. Please try again.'];
+    }
+
+    queue_welcome_email($row);
+
+    return ['success' => true, 'message' => 'Email confirmed. You can now log in.'];
+}
+
+function cleanup_expired_email_confirmations(?PDO $db = null): int
+{
+    $db = $db ?: get_db_connection();
+    auth_ensure_email_confirmations_table($db);
+
+    $stmt = $db->query(
+        "SELECT mail_queue_id
+         FROM email_confirmations
+         WHERE expires_at <= NOW()
+           AND mail_queue_id IS NOT NULL"
+    );
+    $mailQueueIds = $stmt ? array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN)) : [];
+
+    $deletedQueuedMessages = 0;
+    if ($mailQueueIds !== []) {
+        $placeholders = implode(',', array_fill(0, count($mailQueueIds), '?'));
+        $stmt = $db->prepare(
+            "DELETE FROM mail_queue
+             WHERE status <> 'sent'
+               AND id IN ({$placeholders})"
+        );
+        $stmt->execute($mailQueueIds);
+        $deletedQueuedMessages = $stmt->rowCount();
+    }
+
+    $db->exec("DELETE FROM email_confirmations WHERE expires_at <= NOW()");
+
+    return $deletedQueuedMessages;
 }
 
 function lookup_password_reset_token(string $token): ?array
@@ -932,10 +1157,14 @@ function check_auth(): ?array
 
     $db = get_db_connection();
     $stmt = $db->prepare(
-        "SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.role_id, s.expires_at
+        "SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.role_id, u.email_verified, s.expires_at
          FROM users u
          JOIN auth_sessions s ON u.id = s.user_id
-         WHERE u.id = ? AND s.session_token = ? AND s.expires_at > NOW() AND u.is_active = TRUE"
+         WHERE u.id = ?
+           AND s.session_token = ?
+           AND s.expires_at > NOW()
+           AND u.is_active = TRUE
+           AND u.email_verified = TRUE"
     );
     $stmt->execute([$_SESSION['user_id'], $_SESSION['session_token']]);
     $user = $stmt->fetch();
@@ -955,6 +1184,7 @@ function check_auth(): ?array
     $_SESSION['first_name'] = (string)$user['first_name'];
     $_SESSION['last_name'] = (string)$user['last_name'];
     $_SESSION['role_id'] = (int)$user['role_id'];
+    $_SESSION['email_verified'] = (bool)$user['email_verified'];
     $_SESSION['user_data'] = [
         'id' => (int)$user['id'],
         'username' => (string)$user['username'],
@@ -962,6 +1192,7 @@ function check_auth(): ?array
         'first_name' => (string)$user['first_name'],
         'last_name' => (string)$user['last_name'],
         'role_id' => (int)$user['role_id'],
+        'email_verified' => (bool)$user['email_verified'],
     ];
     auth_mark_activity();
 
