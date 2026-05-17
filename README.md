@@ -52,6 +52,7 @@ Auth tables:
 - `email_confirmations` stores registration confirmation tokens until they expire or are consumed
 - `password_resets` stores reset tokens until they expire or are consumed
 - `mail_queue` stores outbound emails until a cron runner sends them
+- `visitor_stats` stores hashed unique public visitors, country, and first/last seen timestamps for the footer activity widget
 
 Auth routes:
 

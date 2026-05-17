@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/visitor_stats.php';
 
 function gm_landing_h(string $value): string
 {
@@ -48,6 +49,8 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
         break;
     }
 }
+
+$visitorStats = gm_visitor_record_and_load();
 ?>
 <!doctype html>
 <html lang="en-CA">
@@ -251,6 +254,7 @@ foreach ($stylesheetCandidates as $stylesheetCandidate) {
       <strong>Gray Mentality</strong>
       <span>Accept reality. Act anyway.</span>
       <small>Built for those who refuse to quietly fade.</small>
+      <?= gm_visitor_render_widget($visitorStats) ?>
       <nav class="footer-links" aria-label="Footer policies">
         <a href="<?= gm_public_url('/privacy') ?>">Privacy Policy</a>
         <a href="<?= gm_public_url('/terms') ?>">Terms of Use</a>

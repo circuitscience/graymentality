@@ -105,6 +105,20 @@ CREATE TABLE IF NOT EXISTS email_confirmations (
         ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS visitor_stats (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    visitor_hash CHAR(64) NOT NULL UNIQUE,
+    country_code VARCHAR(8) NOT NULL DEFAULT 'UNK',
+    country_name VARCHAR(100) NOT NULL DEFAULT 'Unknown',
+    visits INT UNSIGNED NOT NULL DEFAULT 1,
+    first_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_visitor_stats_country (country_code),
+    INDEX idx_visitor_stats_last_seen (last_seen_at)
+);
+
 -- Insert default roles
 INSERT INTO roles (id, name, description) VALUES
 (1, 'user', 'Regular user'),
