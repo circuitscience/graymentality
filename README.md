@@ -156,3 +156,33 @@ This will:
 - The module preview content is a compact example of the module language already used in xFit.
 - `SUBDOMIAIN_URL` is accepted for compatibility, but `SUBDOMAIN_URL` is the preferred spelling.
 - The local container uses MariaDB 10.6.24-compatible settings and conservative SQL modes.
+
+## Gray Today
+
+Gray Today adds a private daily check-in at `/gray`, weekly review at
+`/gray?view=week`, and recent history at `/gray?view=history`. Login and the
+legacy dashboard now lead to Today; existing tools remain at `/modules`.
+
+Before deploying the PHP changes, back up the database and apply
+`sql/gray_today.sql` to the existing application database with your usual SQL
+client. The migration adds two tables only; it does not modify existing user
+or module data. Do not import the full database dump to install this feature.
+
+Each record belongs to the logged-in user. Dates use the existing profile
+ timezone (America/Toronto fallback); timestamps are UTC. Forms left open
+across midnight are rejected with instructions to reload. Outcomes left blank
+remain unrecorded. Recovery is a valid body choice. Updates preserve the
+original thought and question. History displays the latest 90 check-ins and
+52 weekly reviews; older records remain stored.
+
+Edit `data/gray_content.php` to maintain the initial fourteen rotating concepts
+and questions. This first release uses a curated rotation, with content
+snapshots stored in daily entries, rather than a separate content-admin system.
+There are no automatic reminder emails or cross-site account changes.
+
+Validation: `php scripts/tests/gray_today.php`, plus `php -l` for changed PHP
+files. Before release, smoke-test against a migrated staging database: login,
+profile completion, save/edit a check-in, record each outcome, save a weekly
+review, reload history, and confirm a second account cannot see the first
+account's entries. Roll back the PHP changes if needed; retaining the two new
+tables preserves saved records.

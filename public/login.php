@@ -5,12 +5,12 @@ require_once __DIR__ . '/auth_functions.php';
 
 $message = trim((string)($_GET['message'] ?? ''));
 $messageType = $message !== '' ? 'success' : '';
-$next = auth_safe_next_path(isset($_GET['next']) ? (string)$_GET['next'] : null, '/modules/index.php');
+$next = auth_safe_next_path(isset($_GET['next']) ? (string)$_GET['next'] : null, '/gray');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string)($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
-    $next = auth_safe_next_path(isset($_POST['next']) ? (string)$_POST['next'] : $next, '/modules/index.php');
+    $next = auth_safe_next_path(isset($_POST['next']) ? (string)$_POST['next'] : $next, '/gray');
 
     try {
         $result = login_user($email, $password);

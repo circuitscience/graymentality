@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $messageType = $result['success'] ? 'success' : 'error';
 
     if ($result['success']) {
-        header('Location: /modules/index.php');
+        header('Location: /gray');
         exit;
     }
 }

@@ -168,7 +168,7 @@ function gm_front_controller_route_target(string $requestPath): ?array
         }
     }
 
-    foreach (['/modules', '/user_dashboard', '/change_password'] as $protectedPrefix) {
+    foreach (['/modules', '/user_dashboard', '/change_password', '/gray'] as $protectedPrefix) {
         if ($requestPath === $protectedPrefix || str_starts_with($requestPath, $protectedPrefix . '/') || str_starts_with($requestPath, $protectedPrefix . '.php')) {
             $target = gm_front_controller_resolve_php($requestPath);
             if ($target !== null) {
