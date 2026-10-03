@@ -1242,7 +1242,7 @@ $featuredArticleUrl = $featuredArticle ? '/modules/Library/index.php?article=' .
 <body>
     <div class="dashboard">
         <header class="topbar">
-            <a class="brand" href="/modules/index.php" aria-label="Gray Mentality dashboard">
+            <a class="brand" href="/gray" aria-label="Gray Mentality dashboard">
                 <img class="brand-logo" src="<?= gm_logo_url() ?>" alt="" aria-hidden="true">
                 <span class="brand-copy">
                     <span>Gray Mentality</span>
